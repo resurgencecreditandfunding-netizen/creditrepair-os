@@ -1,0 +1,31 @@
+/** Citations used in findings and letters. Keep every citation here so counsel can review one file. */
+export const LAW = {
+  REINVESTIGATE: "FCRA § 611(a)(1)(A), 15 U.S.C. § 1681i(a)(1)(A)",
+  FORWARD_TO_FURNISHER: "FCRA § 611(a)(2), 15 U.S.C. § 1681i(a)(2)",
+  FRIVOLOUS: "FCRA § 611(a)(3), 15 U.S.C. § 1681i(a)(3)",
+  DELETE_UNVERIFIED: "FCRA § 611(a)(5)(A), 15 U.S.C. § 1681i(a)(5)(A)",
+  RESULTS_NOTICE: "FCRA § 611(a)(6), 15 U.S.C. § 1681i(a)(6)",
+  PROCEDURE_DESCRIPTION: "FCRA § 611(a)(6)(B)(iii) and § 611(a)(7), 15 U.S.C. § 1681i(a)(6)(B)(iii), (a)(7)",
+  CONSUMER_STATEMENT: "FCRA § 611(b), 15 U.S.C. § 1681i(b)",
+  ACCURACY: "FCRA § 607(b), 15 U.S.C. § 1681e(b)",
+  OBSOLETE: "FCRA § 605(a), 15 U.S.C. § 1681c(a)",
+  OBSOLETE_CLOCK: "FCRA § 605(c), 15 U.S.C. § 1681c(c)",
+  ID_THEFT_BLOCK: "FCRA § 605B, 15 U.S.C. § 1681c-2",
+  PERMISSIBLE_PURPOSE: "FCRA § 604, 15 U.S.C. § 1681b",
+  FURNISHER_ACCURACY: "FCRA § 623(a)(1), 15 U.S.C. § 1681s-2(a)(1)",
+  FURNISHER_UPDATE: "FCRA § 623(a)(2), 15 U.S.C. § 1681s-2(a)(2)",
+  FURNISHER_DISPUTE_FLAG: "FCRA § 623(a)(3), 15 U.S.C. § 1681s-2(a)(3)",
+  FURNISHER_DOFD: "FCRA § 623(a)(5), 15 U.S.C. § 1681s-2(a)(5)",
+  FURNISHER_DIRECT: "FCRA § 623(a)(8), 15 U.S.C. § 1681s-2(a)(8), and 12 C.F.R. § 1022.43",
+  FURNISHER_AFTER_CRA: "FCRA § 623(b), 15 U.S.C. § 1681s-2(b)",
+  FDCPA_VALIDATION: "FDCPA § 809, 15 U.S.C. § 1692g",
+  FDCPA_DISPUTED: "FDCPA § 807(8), 15 U.S.C. § 1692e(8)",
+  LIABILITY: "FCRA §§ 616–617, 15 U.S.C. §§ 1681n–1681o",
+  MEDICAL_POLICY: "Equifax, Experian and TransUnion joint medical collection reporting policy (2022–2023)",
+} as const;
+
+export const BUREAU_ADDRESS = {
+  EQ: "Equifax Information Services LLC\nP.O. Box 740256\nAtlanta, GA 30374-0256",
+  EX: "Experian\nP.O. Box 4500\nAllen, TX 75013",
+  TU: "TransUnion Consumer Solutions\nP.O. Box 2000\nChester, PA 19016-2000",
+} as const;
