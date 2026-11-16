@@ -32,7 +32,7 @@ export function getTenant(slugOrId: string): Row {
   return (d.prepare("SELECT * FROM tenants WHERE slug = ? OR id = ?").get(slugOrId, slugOrId)
     ?? d.prepare("SELECT * FROM tenants WHERE slug = 'default'").get()) as Row;
 }
-export const brandOf = (client: Row): Brand => { const t = getTenant(client.tenant_id); return { name: t.name, address: t.address }; };
+export const brandOf = (client: Row): Brand => { const t = getTenant(client.tenant_id); return { name: t.name, address: t.address, legalName: t.legal_name }; };
 
 export interface NewClient {
   tenant: string; name: string; email: string; phone: string; address: string; city: string; state: string;
@@ -96,11 +96,11 @@ export function getReports(clientId: string): CreditReport[] {
   return (db().prepare("SELECT data FROM reports WHERE client_id = ? ORDER BY created_at").all(clientId) as Row[])
     .map((r) => JSON.parse(r.data));
 }
-export function saveReport(clientId: string, report: CreditReport) {
+export function saveReport(clientId: string, report: CreditReport, actor = "system") {
   const d = db();
   d.prepare("INSERT INTO reports (id, client_id, pulled_at, source, data, created_at) VALUES (?,?,?,?,?,?)")
     .run(randomUUID(), clientId, report.pulledAt, report.source, JSON.stringify(report), now());
-  log(clientId, "system", "report_saved", { source: report.source, scores: report.scores, accounts: report.accounts.length });
+  log(clientId, actor, "report_saved", { source: report.source, scores: report.scores, accounts: report.accounts.length });
 
   // An open case whose item no longer appears with that bureau has been deleted.
   for (const c of getCases(clientId).filter((x) => !["resolved", "exhausted"].includes(x.status))) {
@@ -249,15 +249,15 @@ export function setLetterBody(clientId: string, id: string, body: string, actor:
   db().prepare("UPDATE letters SET body=? WHERE id=?").run(body, id);
   log(clientId, actor, "letter_reworded", { letterId: id });
 }
-export function markMailed(clientId: string, id: string, tracking: string, mailedAt = today()) {
+export function markMailed(clientId: string, id: string, tracking: string, mailedAt = today(), actor = "consumer") {
   const l = ownLetter(clientId, id);
   if (l.status !== "attested") throw new Error("A letter must be approved by the consumer before it is mailed.");
   const d = db();
   d.prepare("UPDATE letters SET status='mailed', mailed_at=?, tracking=?, due_at=? WHERE id=?").run(mailedAt, tracking, dueDate(l.step, mailedAt), id);
   d.prepare("UPDATE cases SET status='awaiting_response', last_mailed_at=?, updated_at=? WHERE id IN (SELECT case_id FROM letter_cases WHERE letter_id=?)").run(mailedAt, now(), id);
-  log(clientId, "operator", "letter_mailed", { letterId: id, tracking, mailedAt });
+  log(clientId, actor, "letter_mailed", { letterId: id, tracking, mailedAt });
 }
-export function recordOutcome(clientId: string, letterId: string, caseId: string, outcome: Outcome) {
+export function recordOutcome(clientId: string, letterId: string, caseId: string, outcome: Outcome, actor = "consumer") {
   const l = ownLetter(clientId, letterId);
   if (l.status !== "mailed") throw new Error("Results can only be recorded for a mailed letter.");
   if (outcome === "no_response" && !DEMO && today() <= l.due_at) throw new Error(`The response deadline (${l.due_at}) has not passed yet.`);
@@ -268,7 +268,7 @@ export function recordOutcome(clientId: string, letterId: string, caseId: string
   if (next === "resolved") d.prepare("UPDATE cases SET status='resolved', resolution=?, updated_at=? WHERE id=?").run(outcome === "deleted" ? "Deleted" : "Corrected", now(), caseId);
   else if (next === "exhausted") d.prepare("UPDATE cases SET status='exhausted', resolution=?, updated_at=? WHERE id=?").run("All rounds used. Consider a consumer statement or an attorney.", now(), caseId);
   else d.prepare("UPDATE cases SET status='pending_letter', step=?, round=?, updated_at=? WHERE id=?").run(next, STEP_ROUND[next], now(), caseId);
-  log(clientId, "consumer", "outcome_recorded", { letterId, caseId, outcome, next });
+  log(clientId, actor, "outcome_recorded", { letterId, caseId, outcome, next });
   closeFinishedLetters(clientId);
 }
 function closeFinishedLetters(clientId: string) {

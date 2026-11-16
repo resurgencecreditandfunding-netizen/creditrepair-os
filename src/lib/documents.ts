@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 
-export interface Brand { name: string; address: string }
+export interface Brand { name: string; address: string; legalName?: string | null }
+/** The company that is party to the contract. The product name is shown only as the service name. */
+const party = (b: Brand) => b.legalName && b.legalName !== b.name ? `${b.legalName} (which provides this service under the name ${b.name})` : b.name;
+const co = (b: Brand) => b.legalName || b.name;
 export interface Doc { key: string; version: string; title: string; body: string; hash: string }
 
 const V = "2026-11-draft1";
@@ -39,12 +42,12 @@ export function disclosureDoc(): Doc {
 export function contractDocs(b: Brand, cancelBy: string): Doc[] {
   return [
     doc("esign_consent", "Consent to Electronic Records and Signatures",
-`You agree to receive this agreement, the required disclosures, and all later notices from ${b.name} electronically, and to sign electronically. Your electronic signature has the same effect as a handwritten one.
+`You agree to receive this agreement, the required disclosures, and all later notices from ${co(b)} electronically, and to sign electronically. Your electronic signature has the same effect as a handwritten one.
 
-You can ask for paper copies at any time at no charge, and you can withdraw this consent by writing to ${b.name}, ${b.address}. You need a device with a web browser and the ability to view and save PDF or web pages. Copies of everything you sign stay available in your account under Documents.`),
+You can ask for paper copies at any time at no charge, and you can withdraw this consent by writing to ${co(b)}, ${b.address}. You need a device with a web browser and the ability to view and save PDF or web pages. Copies of everything you sign stay available in your account under Documents.`),
 
     doc("service_agreement", "Credit Services Agreement",
-`This agreement is between you and ${b.name}, ${b.address}.
+`This agreement is between you and ${party(b)}, ${b.address}.
 
 1. Price. The total cost of these services is $0.00. There is no setup fee, no monthly fee, and no fee of any kind for the credit services. No payment is due now or later.
 
@@ -70,7 +73,7 @@ YOU MAY CANCEL THIS CONTRACT WITHOUT PENALTY OR OBLIGATION AT ANY TIME BEFORE MI
     doc("notice_of_cancellation", "Notice of Cancellation",
 `You may cancel this contract, without any penalty or obligation, at any time before midnight of the 3rd day which begins after the date the contract is signed by you.
 
-To cancel this contract, mail or deliver a signed, dated copy of this cancellation notice, or any other written notice, to ${b.name} at ${b.address} before midnight on ${cancelBy}. You may also cancel with one click from the Documents page of your account.
+To cancel this contract, mail or deliver a signed, dated copy of this cancellation notice, or any other written notice, to ${co(b)} at ${b.address} before midnight on ${cancelBy}. You may also cancel with one click from the Documents page of your account.
 
 I hereby cancel this transaction.
 
@@ -79,12 +82,12 @@ Date: ____________________
 Signature: ____________________`),
 
     doc("limited_authorization", "Limited Authorization",
-`You authorize ${b.name} to (1) obtain your consumer credit reports for the purpose of reviewing them with you, and (2) prepare and mail correspondence in your name to credit bureaus and to companies that furnish information about you, only after you have reviewed and approved the specific letter.
+`You authorize ${co(b)} to (1) obtain your consumer credit reports for the purpose of reviewing them with you, and (2) prepare and mail correspondence in your name to credit bureaus and to companies that furnish information about you, only after you have reviewed and approved the specific letter.
 
 This authorization does not let us sign contracts for you, apply for credit for you, or speak to anyone as if we were you. You can revoke it at any time by cancelling.`),
 
     doc("funding_disclosure", "How We Are Paid, and Your Funding Options",
-`The credit services are free. ${b.name} is paid only if you later choose a financing product through us. In that case the lender or partner may pay us a fee or commission, and we will tell you about that compensation before you apply.
+`The credit services are free. ${co(b)} is paid only if you later choose a financing product through us. In that case the lender or partner may pay us a fee or commission, and we will tell you about that compensation before you apply.
 
 You are never required to apply for, or accept, any financing. Choosing not to seek funding does not affect your credit services and creates no charge.
 

@@ -20,3 +20,20 @@ export function Flash({ error, ok }: { error?: string; ok?: string }) {
   if (!error && !ok) return null;
   return <div className={`notice ${error ? "" : "gray"}`} role="status">{error ?? ok}</div>;
 }
+
+export function ConsoleBar({ active, name, signOut }: { active?: string; name: string; signOut: () => Promise<void> }) {
+  const items = [["", "Clients"], ["settings", "Companies and logins"]];
+  return (
+    <header className="topbar">
+      <div className="topbar-in">
+        <Link href="/console" className="brand"><i />Operator console</Link>
+        <nav className="nav" style={{ flex: 1 }}>
+          {items.map(([k, label]) => <Link key={k} href={`/console/${k}`} className={active === k ? "on" : ""}>{label}</Link>)}
+        </nav>
+        <form action={signOut} className="row small" style={{ color: "#a1a1aa" }}>
+          <span>{name}</span><button className="btn link" type="submit" style={{ color: "#fff" }}>Sign out</button>
+        </form>
+      </div>
+    </header>
+  );
+}

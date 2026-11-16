@@ -1,6 +1,8 @@
 import type { DatabaseSync } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { hashPassword } from "./password";
 
 // Loaded through getBuiltinModule so the bundler does not try to resolve it.
 const sqlite = process.getBuiltinModule("node:sqlite") as typeof import("node:sqlite");
@@ -8,7 +10,11 @@ const sqlite = process.getBuiltinModule("node:sqlite") as typeof import("node:sq
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS tenants (
   id TEXT PRIMARY KEY, slug TEXT UNIQUE NOT NULL, name TEXT NOT NULL, address TEXT NOT NULL,
-  kind TEXT NOT NULL DEFAULT 'direct'
+  kind TEXT NOT NULL DEFAULT 'direct', legal_name TEXT
+);
+CREATE TABLE IF NOT EXISTS operators (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, email TEXT UNIQUE NOT NULL, name TEXT NOT NULL,
+  password_hash TEXT NOT NULL, role TEXT NOT NULL, created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS clients (
   id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT,
@@ -51,6 +57,17 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 `;
 
+/** First console login. Set ADMIN_EMAIL and ADMIN_PASSWORD; demo mode falls back to a known login. */
+function seedAdmin(d: DatabaseSync) {
+  if (d.prepare("SELECT 1 FROM operators LIMIT 1").get()) return;
+  const demo = process.env.DEMO_MODE === "1";
+  const email = process.env.ADMIN_EMAIL ?? (demo ? "admin@demo.local" : undefined);
+  const password = process.env.ADMIN_PASSWORD ?? (demo ? "demo-console" : undefined);
+  if (!email || !password) return;
+  d.prepare("INSERT INTO operators (id, tenant_id, email, name, password_hash, role, created_at) VALUES (?,?,?,?,?,?,?)")
+    .run(randomUUID(), "tenant_default", email.toLowerCase(), "Platform admin", hashPassword(password), "platform", new Date().toISOString());
+}
+
 const g = globalThis as unknown as { __cfoDb?: DatabaseSync };
 
 export function db(): DatabaseSync {
@@ -60,12 +77,16 @@ export function db(): DatabaseSync {
   const d = new sqlite.DatabaseSync(file);
   d.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   d.exec(SCHEMA);
-  d.prepare("INSERT OR IGNORE INTO tenants (id, slug, name, address, kind) VALUES (?,?,?,?,?)").run(
+  try { d.exec("ALTER TABLE tenants ADD COLUMN legal_name TEXT"); } catch { /* column already exists */ }
+  // The platform's own tenant. BRAND_NAME is the product name; LEGAL_NAME is the contracting company.
+  d.prepare("INSERT OR IGNORE INTO tenants (id, slug, name, address, kind, legal_name) VALUES (?,?,?,?,?,?)").run(
     "tenant_default", "default",
     process.env.BRAND_NAME ?? "CreditOS",
     process.env.BRAND_ADDRESS ?? "[Company street address, city, state, ZIP]",
     "direct",
+    process.env.LEGAL_NAME ?? "Resurgence Consulting Services Incorporated",
   );
+  seedAdmin(d);
   g.__cfoDb = d;
   return d;
 }

@@ -9,7 +9,7 @@ npm install
 npm run dev:demo
 ```
 
-Open http://localhost:3000. Demo mode adds a sample report, a simulated report refresh, and skips the waiting period. Never set `DEMO_MODE=1` in production.
+Open http://localhost:3000 for the client side and http://localhost:3000/console for staff (demo login: `admin@demo.local` / `demo-console`). Demo mode adds a sample report, a simulated report refresh, and skips the waiting period. Never set `DEMO_MODE=1` in production.
 
 ```bash
 npm test
@@ -19,7 +19,9 @@ npm test
 
 | Variable | Purpose |
 |---|---|
-| `BRAND_NAME`, `BRAND_ADDRESS` | Company name and principal address printed in the contract. Required by law before launch. |
+| `BRAND_NAME` | Product name clients see. Placeholder: CreditOS. |
+| `LEGAL_NAME`, `BRAND_ADDRESS` | Contracting company and its principal address, printed in the contract. Defaults to Resurgence Consulting Services Incorporated; the address is required by law before launch. |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Creates the first platform-owner console login on first start. |
 | `SESSION_SECRET` | Signs the session cookie. Required in production. |
 | `ANTHROPIC_API_KEY` | Turns on AI: PDF report reading and letter rewording. |
 | `DATABASE_PATH` | SQLite file. Defaults to `data/app.db`. |
@@ -35,13 +37,22 @@ npm test
 | `src/lib/documents.ts` | The disclosure, contract, cancellation notice, authorization and funding disclosure. |
 | `src/lib/funding.ts` | When funding opens (`FUNDING_RULES`). |
 | `src/lib/store.ts` | Compliance gates: disclosure before contract, waiting period, approval before mailing, activity record. |
+| `src/lib/console.ts` | Staff logins, companies, the work queue, and the rule that staff see only their own company's clients. |
 | `src/lib/ai.ts` | Claude: reads PDFs and rewords letters. It cannot add or drop a fact. |
+
+## Operator console (`/console`)
+
+- Platform owner: sees every company and client, adds companies and staff logins.
+- Company admin or staff: sees only that company's clients.
+- Work queue: letters the client approved and are ready to mail, overdue bureau responses, clients ready for the next round, funding requests.
+- Staff can upload reports, draft letters, record mailing and results, and add internal notes. Staff can never approve a letter for a client.
+- Each company's clients sign a contract naming that company's legal name and address.
 
 ## Not built yet
 
 - Live credit report connection (reports are uploaded as JSON, or PDF with AI).
 - Automated certified mail (letters are printed; tracking is typed in).
-- Login. A signed cookie identifies the device; add email or SMS login before real customers.
-- Operator console for credit repair firms and tax professionals (tenants exist in the database; `/?t=slug` selects one).
+- Client login. A signed cookie identifies the device; add email or SMS login before real customers.
+- Staff password reset and two-step sign-in. New logins get a temporary password set by an admin.
 - Lender matching (Phase 2).
 - State eligibility rules, and attorney review of every document and citation.
