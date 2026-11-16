@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { parseReportPdf } from "@/lib/ai";
+import { parseReportFile } from "@/lib/ai";
 import * as ops from "@/lib/console";
 import { endOpSession, requireOperator, startOpSession } from "@/lib/opsession";
 import * as store from "@/lib/store";
@@ -51,8 +51,9 @@ export async function opUploadReport(f: FormData) {
   if (!(file instanceof File) || !file.size) back(path, "error", "Choose a file first.");
   const upload = file as File;
   try {
-    const isPdf = upload.type === "application/pdf" || upload.name.toLowerCase().endsWith(".pdf");
-    const report = isPdf ? await parseReportPdf(Buffer.from(await upload.arrayBuffer()).toString("base64")) : validateReport(JSON.parse(await upload.text()));
+    const report = /\.json$/i.test(upload.name)
+      ? validateReport(JSON.parse(await upload.text()))
+      : await parseReportFile({ name: upload.name, type: upload.type, bytes: Buffer.from(await upload.arrayBuffer()) });
     store.saveReport(clientId, report, actor(op));
   } catch (e) { back(path, "error", message(e)); }
   back(path, "ok", "Report saved and audited.");
@@ -96,4 +97,16 @@ export async function addOperator(f: FormData) {
   try { ops.createOperator({ tenantId, email: s(f, "email"), name: s(f, "name"), password: s(f, "password"), role }); }
   catch (e) { back("/console/settings", "error", message(e)); }
   back("/console/settings", "ok", "Login created.");
+}
+
+export async function addMonitoringService(f: FormData) {
+  const op = await requireOperator();
+  try { ops.addMonitoring(op, { name: s(f, "name"), url: s(f, "url"), blurb: s(f, "blurb") }); }
+  catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Credit monitoring partner added. Clients now see it when they connect a report.");
+}
+export async function removeMonitoringService(f: FormData) {
+  const op = await requireOperator();
+  try { ops.removeMonitoring(op, s(f, "id")); } catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Partner removed.");
 }

@@ -78,23 +78,50 @@ const SCHEMA_HINT = `{
   "publicRecords": [{ "id": "p1", "type": "bankruptcy_ch7|bankruptcy_ch13", "filed": "YYYY-MM-DD", "bureaus": ["EQ"] }]
 }`;
 
-/** Reads a credit report PDF into the structured form the audit rules work on. */
-export async function parseReportPdf(base64: string): Promise<CreditReport> {
-  if (!aiEnabled()) throw new Error("AI is not configured, so PDF reports cannot be read. Upload a JSON report instead.");
-  const out = await ask(
-    `You transcribe consumer credit reports into JSON. Transcribe only what the document states.
+const TRANSCRIBE = `You transcribe consumer credit reports into JSON. Transcribe only what the document states.
 - Never guess or fill in a value. Omit any optional field the document does not show.
 - If a date shows only month and year, use the first day of that month.
 - One entry per account; put each bureau's version of the account under "bureaus".
 - Output a single JSON object matching this shape and nothing else:
-${SCHEMA_HINT}`,
-    [
-      { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
+${SCHEMA_HINT}`;
+
+/** Turns a saved web page into plain text, dropping scripts, styles and markup. */
+export function htmlToText(html: string): string {
+  return html
+    .replace(/<(script|style|noscript|svg|head)\b[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<\/(td|th)>/gi, " | ").replace(/<(br|\/tr|\/p|\/div|\/li|\/h[1-6])\b[^>]*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"')
+    .replace(/[ \t]+/g, " ").replace(/ *\n\s*/g, "\n").trim();
+}
+
+const MAX_TEXT = 1_500_000; // characters; larger files are refused rather than cut short
+
+/**
+ * Reads a report downloaded from a credit monitoring service (PDF, or a saved web page)
+ * into the structured form the audit rules work on.
+ */
+export async function parseReportFile(file: { name: string; type: string; bytes: Buffer }): Promise<CreditReport> {
+  if (!aiEnabled()) throw new Error("Report reading is not switched on yet. The platform needs an AI key before reports can be uploaded.");
+  const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+  let content: Anthropic.Beta.BetaMessageContentParam;
+  if (isPdf) {
+    content = [
+      { type: "document", source: { type: "base64", media_type: "application/pdf", data: file.bytes.toString("base64") } },
       { type: "text", text: "Transcribe this credit report." },
-    ],
-  );
-  if (!out) throw new Error("The report could not be read. Try a clearer PDF or upload JSON.");
-  const json = out.slice(out.indexOf("{"), out.lastIndexOf("}") + 1);
-  const report = validateReport(JSON.parse(json));
-  return { ...report, source: "pdf (AI transcription, review before use)" };
+    ];
+  } else {
+    const raw = file.bytes.toString("utf8");
+    const text = /<html|<body|<table|<div/i.test(raw) ? htmlToText(raw) : raw;
+    if (text.length < 200) throw new Error("That file does not contain a readable report. Save the full report page as PDF or HTML and try again.");
+    if (text.length > MAX_TEXT) throw new Error("That file is too large to read in one pass. Save the report as PDF instead.");
+    content = `Transcribe this credit report.\n\n<report>\n${text}\n</report>`;
+  }
+  const out = await ask(TRANSCRIBE, content);
+  if (!out) throw new Error("The report could not be read. Try saving it as PDF and uploading again.");
+  let parsed: unknown;
+  try { parsed = JSON.parse(out.slice(out.indexOf("{"), out.lastIndexOf("}") + 1)); }
+  catch { throw new Error("The report could not be read. Try saving it as PDF and uploading again."); }
+  const report = validateReport(parsed);
+  return { ...report, source: `${isPdf ? "PDF" : "saved page"} (read by AI)` };
 }

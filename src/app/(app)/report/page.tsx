@@ -1,6 +1,7 @@
 import { clearItem, loadSample, stateItem, uploadReport } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
 import { aiEnabled } from "@/lib/ai";
+import { listMonitoring } from "@/lib/console";
 import { fmt } from "@/lib/dates";
 import { requireClient } from "@/lib/session";
 import * as store from "@/lib/store";
@@ -75,6 +76,7 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
   const report = store.getReports(c.id).at(-1);
   const findings = store.currentFindings(c.id);
   const stated = new Map(store.getAssertions(c.id).map((a) => [`${a.item_type}:${a.item_id}`, { reason: a.reason, note: a.note }]));
+  const partners = listMonitoring();
   const by = (type: string, id: string) => findings.filter((f) => f.itemType === type && f.itemId === id);
 
   return (
@@ -86,18 +88,41 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
         <Flash {...sp} />
 
         <div className="card">
-          <h2>{report ? "Add a newer report" : "Connect your report"}</h2>
+          <h2>{report ? "Add a newer report" : "Step 1. Get your 3-bureau report"}</h2>
+          {partners.length > 0 ? (
+            <>
+              <p className="small muted">{report ? "Pull a fresh report each month so we can see what changed." : "You need a report that shows all three bureaus. Sign up with one of these services, then download your report."}</p>
+              <div className="grid g3">
+                {partners.map((m) => (
+                  <a key={m.id} href={`/go/${m.id}`} target="_blank" rel="sponsored noopener" className="card" style={{ marginBottom: 0, textDecoration: "none" }}>
+                    <h3>{m.name} ↗</h3>
+                    <span className="small muted">{m.blurb ?? "3-bureau report and scores"}</span>
+                  </a>
+                ))}
+              </div>
+              <p className="fine" style={{ margin: "10px 0 0" }}>These services charge their own fee, paid to them and not to us. We may earn a commission if you sign up through these links. You may use any service that provides a 3-bureau report, or your free reports from annualcreditreport.com.</p>
+            </>
+          ) : <p className="small muted">Download a report that shows all three bureaus from your credit monitoring service, or get your free reports at annualcreditreport.com.</p>}
+
+          <h2 style={{ marginTop: 20 }}>{report ? "Upload it" : "Step 2. Upload it here"}</h2>
+          <ol className="small muted" style={{ margin: "0 0 12px", paddingLeft: 18 }}>
+            <li>Open the full 3-bureau report in your monitoring account.</li>
+            <li>Save it as a PDF (Print, then "Save as PDF"), or save the page as HTML.</li>
+            <li>Upload that file below. It is read automatically and audited in about a minute.</li>
+          </ol>
           <div className="row">
             <form action={uploadReport} className="row">
-              <input type="file" name="file" accept={aiEnabled() ? ".json,.pdf,application/pdf,application/json" : ".json,application/json"} required />
-              <button className="btn dark" type="submit">Upload</button>
+              <input type="file" name="file" accept=".pdf,.html,.htm,.json,application/pdf,text/html" required aria-label="Credit report file" />
+              <button className="btn red" type="submit">Upload report</button>
             </form>
             {store.DEMO && <form action={loadSample}><button className="btn" type="submit">Load demo report</button></form>}
           </div>
-          <p className="small muted" style={{ margin: "10px 0 0" }}>
-            {aiEnabled() ? "Upload a 3-bureau report as PDF (read by AI, then checked) or as JSON." : "Upload a report as JSON. PDF reading turns on when an AI key is configured. A live bureau connection is the next integration."}
-          </p>
+          {!aiEnabled() && <p className="small" style={{ margin: "10px 0 0", color: "var(--red-dark)" }}>Report reading is not switched on yet, so PDF and HTML uploads will be refused.</p>}
         </div>
+
+        {report?.source.includes("read by AI") && (
+          <div className="notice">This report was read automatically from your file. Check the accounts below against your original report. If anything was read wrong, upload the report again or mark that item accurate so it is not disputed.</div>
+        )}
 
         {report && (
           <>

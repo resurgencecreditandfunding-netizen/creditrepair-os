@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { opAddNote, opFundingHandled, opPrepareLetters, opUploadReport, signOutOperator } from "@/app/console/actions";
 import { ConsoleBar, Flash } from "@/components/ui";
-import { aiEnabled } from "@/lib/ai";
 import * as ops from "@/lib/console";
 import { fmt, today } from "@/lib/dates";
 import { fundingStatus } from "@/lib/funding";
@@ -71,7 +70,7 @@ export default async function Client({ params, searchParams }: { params: Promise
             </div>
             <form action={opUploadReport} className="row" style={{ marginTop: 14 }}>
               <Client />
-              <input type="file" name="file" required aria-label="Credit report file" accept={aiEnabled() ? ".json,.pdf" : ".json"} />
+              <input type="file" name="file" required aria-label="Credit report file" accept=".pdf,.html,.htm,.json" />
               <button className="btn" type="submit" disabled={!c.signed_at}>Upload report</button>
             </form>
             <p className="fine" style={{ margin: "8px 0 0" }}>{latest ? `Latest report: ${fmt(latest.pulledAt)} (${latest.source}), ${reports.length} on file.` : "No report on file."}</p>

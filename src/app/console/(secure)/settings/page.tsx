@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { addOperator, addTenant, signOutOperator } from "@/app/console/actions";
+import { addMonitoringService, addOperator, addTenant, removeMonitoringService, signOutOperator } from "@/app/console/actions";
 import { ConsoleBar, Flash } from "@/components/ui";
 import * as ops from "@/lib/console";
 import { requireOperator } from "@/lib/opsession";
@@ -10,6 +10,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const op = await requireOperator();
   const sp = await searchParams;
   const tenants = ops.listTenants(op);
+  const partners = ops.listMonitoring();
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   return (
@@ -32,6 +33,25 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             )}
           </div>
         ))}
+
+        {ops.isPlatform(op) && (
+          <div className="card">
+            <h2>Credit monitoring partners</h2>
+            <p className="small muted">Your affiliate links. Every client, at every company, sees these when they connect a report. Clicks are recorded in the client's activity record.</p>
+            {partners.length > 0 && (
+              <div className="tablewrap"><table><tbody>{partners.map((m) => (
+                <tr key={m.id}><td><strong>{m.name}</strong><div className="small muted">{m.blurb}</div></td><td className="small" style={{ wordBreak: "break-all" }}>{m.url}</td>
+                  <td><form action={removeMonitoringService}><input type="hidden" name="id" value={m.id} /><button className="btn link" type="submit">Remove</button></form></td></tr>
+              ))}</tbody></table></div>
+            )}
+            <form action={addMonitoringService} className="row" style={{ alignItems: "flex-end", marginTop: 12 }}>
+              <div style={{ flex: "1 1 160px" }}><label htmlFor="mname">Service name</label><input id="mname" name="name" type="text" required /></div>
+              <div style={{ flex: "2 1 260px" }}><label htmlFor="murl">Your affiliate link</label><input id="murl" name="url" type="text" required placeholder="https://" /></div>
+              <div style={{ flex: "2 1 220px" }}><label htmlFor="mblurb">Short description (optional)</label><input id="mblurb" name="blurb" type="text" maxLength={80} placeholder="3-bureau report, $1 trial" /></div>
+              <button className="btn dark" type="submit">Add partner</button>
+            </form>
+          </div>
+        )}
 
         <div className="grid g2">
           {ops.canManage(op) && (

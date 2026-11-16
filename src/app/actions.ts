@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { parseReportPdf, rewordLetter } from "@/lib/ai";
+import { parseReportFile, rewordLetter } from "@/lib/ai";
 import { sampleReport, simulateRefresh } from "@/lib/sample";
 import { currentClient, endSession, requestMeta, requireClient, startSession } from "@/lib/session";
 import * as store from "@/lib/store";
@@ -63,10 +63,9 @@ export async function uploadReport(f: FormData) {
   if (!(file instanceof File) || !file.size) back("/report", "error", "Choose a file first.");
   const upload = file as File;
   try {
-    const isPdf = upload.type === "application/pdf" || upload.name.toLowerCase().endsWith(".pdf");
-    const report = isPdf
-      ? await parseReportPdf(Buffer.from(await upload.arrayBuffer()).toString("base64"))
-      : validateReport(JSON.parse(await upload.text()));
+    const report = /\.json$/i.test(upload.name)
+      ? validateReport(JSON.parse(await upload.text()))
+      : await parseReportFile({ name: upload.name, type: upload.type, bytes: Buffer.from(await upload.arrayBuffer()) });
     store.saveReport(c.id, report);
   } catch (e) { back("/report", "error", message(e)); }
   redirect("/report");

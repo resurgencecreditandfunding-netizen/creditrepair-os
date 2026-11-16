@@ -96,3 +96,25 @@ describe("client summary and queue", () => {
     expect(ops.summarize(store.getClient(clientA)!).fundingRequested).toBe(false);
   });
 });
+
+describe("credit monitoring partners", () => {
+  it("lets only the platform owner manage affiliate links, and only https ones", () => {
+    expect(() => ops.addMonitoring(staffB, { name: "X", url: "https://x.example/a", blurb: "" })).toThrow(/platform owner/);
+    expect(() => ops.addMonitoring(platform, { name: "X", url: "javascript:alert(1)", blurb: "" })).toThrow(/https/);
+    expect(() => ops.addMonitoring(platform, { name: "X", url: "http://x.example", blurb: "" })).toThrow(/https/);
+    const id = ops.addMonitoring(platform, { name: "ScoreWatch", url: "https://scorewatch.example/?aff=123", blurb: "3-bureau" });
+    expect(ops.listMonitoring()).toEqual([{ id, name: "ScoreWatch", url: "https://scorewatch.example/?aff=123", blurb: "3-bureau" }]);
+    expect(() => ops.removeMonitoring(staffA, id)).toThrow(/platform owner/);
+    ops.removeMonitoring(platform, id);
+    expect(ops.listMonitoring()).toEqual([]);
+  });
+});
+
+describe("saved report pages", () => {
+  it("are reduced to readable text without scripts or markup", async () => {
+    const { htmlToText } = await import("@/lib/ai");
+    const text = htmlToText(`<html><head><title>x</title><style>td{color:red}</style></head><body><script>track()</script>
+      <h2>Northgate Retail Card</h2><table><tr><td>Balance</td><td>$2,315</td></tr><tr><td>Status</td><td>Charge-off &amp; closed</td></tr></table></body></html>`);
+    expect(text).toBe("Northgate Retail Card\nBalance | $2,315 |\nStatus | Charge-off & closed |");
+  });
+});

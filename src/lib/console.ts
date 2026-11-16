@@ -125,3 +125,26 @@ export function markFundingHandled(op: Operator, clientId: string) {
   clientFor(op, clientId);
   store.log(clientId, `operator:${op.email}`, "funding_review_handled");
 }
+
+// ---------- credit monitoring partners (the platform owner's affiliate links) ----------
+export interface MonitoringService { id: string; name: string; url: string; blurb: string | null }
+export function listMonitoring(): MonitoringService[] {
+  return db().prepare("SELECT id, name, url, blurb FROM monitoring_services ORDER BY created_at").all() as unknown as MonitoringService[];
+}
+export const getMonitoring = (id: string) =>
+  db().prepare("SELECT id, name, url, blurb FROM monitoring_services WHERE id = ?").get(id) as unknown as MonitoringService | undefined;
+export function addMonitoring(op: Operator, m: { name: string; url: string; blurb: string }) {
+  if (!isPlatform(op)) throw new Error("Only the platform owner can change credit monitoring partners.");
+  let u: URL;
+  try { u = new URL(m.url.trim()); } catch { throw new Error("Enter the full affiliate link, starting with https://"); }
+  if (u.protocol !== "https:") throw new Error("The affiliate link must start with https://");
+  if (!m.name.trim()) throw new Error("Enter the service name.");
+  const id = randomUUID();
+  db().prepare("INSERT INTO monitoring_services (id, name, url, blurb, created_at) VALUES (?,?,?,?,?)")
+    .run(id, m.name.trim(), u.toString(), m.blurb.trim() || null, new Date().toISOString());
+  return id;
+}
+export function removeMonitoring(op: Operator, id: string) {
+  if (!isPlatform(op)) throw new Error("Only the platform owner can change credit monitoring partners.");
+  db().prepare("DELETE FROM monitoring_services WHERE id = ?").run(id);
+}

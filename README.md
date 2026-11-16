@@ -23,7 +23,7 @@ npm test
 | `LEGAL_NAME`, `BRAND_ADDRESS` | Contracting company and its principal address, printed in the contract. Defaults to Resurgence Consulting Services Incorporated; the address is required by law before launch. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Creates the first platform-owner console login on first start. |
 | `SESSION_SECRET` | Signs the session cookie. Required in production. |
-| `ANTHROPIC_API_KEY` | Turns on AI: PDF report reading and letter rewording. |
+| `ANTHROPIC_API_KEY` | Required for real use. Reads uploaded reports (PDF or saved HTML) and rewords letters. Without it, only the demo report and JSON uploads work. |
 | `DATABASE_PATH` | SQLite file. Defaults to `data/app.db`. |
 
 ## Where things live
@@ -48,10 +48,16 @@ npm test
 - Staff can upload reports, draft letters, record mailing and results, and add internal notes. Staff can never approve a letter for a client.
 - Each company's clients sign a contract naming that company's legal name and address.
 
+## How the work is divided
+
+The client does the work: signs up for credit monitoring through a partner link, uploads the report, approves each letter, prints and mails it, and records the tracking number and results. The platform audits the report, decides the round, writes the letters, and tracks deadlines. Staff oversee from the console.
+
+Credit monitoring partners are the platform owner's affiliate links, managed under Companies and logins. Every client at every company sees them, with a commission disclosure, and each click is recorded.
+
 ## Not built yet
 
-- Live credit report connection (reports are uploaded as JSON, or PDF with AI).
-- Automated certified mail (letters are printed; tracking is typed in).
+- Operator subscription billing and self-serve company sign-up.
+- Per-company fee terms in the client contract (every contract currently says $0).
 - Client login. A signed cookie identifies the device; add email or SMS login before real customers.
 - Staff password reset and two-step sign-in. New logins get a temporary password set by an admin.
 - Lender matching (Phase 2).

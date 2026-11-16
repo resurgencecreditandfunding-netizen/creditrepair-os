@@ -47,7 +47,13 @@ export default async function Letter({ params, searchParams }: { params: Promise
           {l.status === "attested" && (
             <div className="card">
               <h2>Ready to mail</h2>
-              <p className="small muted">Approved {fmt(l.attested_at)}. Print, sign, add copies of your ID and proof of address, and send by certified mail. Then record the tracking number.</p>
+              <p className="small muted">Approved {fmt(l.attested_at)}. You send this one yourself:</p>
+              <ol className="small" style={{ margin: "0 0 14px", paddingLeft: 18 }}>
+                <li>Print the letter and sign it above your name.</li>
+                <li>Add a copy of your photo ID and a recent bill or statement showing your address.</li>
+                <li>Mail it from the post office by certified mail with return receipt, and keep the receipt.</li>
+                <li>Enter the tracking number below. We start the response clock and tell you when the deadline passes.</li>
+              </ol>
               <form action={mailLetter} className="row" style={{ alignItems: "flex-end" }}>
                 <Hidden />
                 <div style={{ flex: "1 1 240px" }}><label htmlFor="tracking">Certified mail tracking number</label><input id="tracking" type="text" name="tracking" required /></div>

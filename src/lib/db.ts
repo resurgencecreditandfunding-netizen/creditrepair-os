@@ -51,6 +51,9 @@ CREATE TABLE IF NOT EXISTS letter_cases (
   letter_id TEXT NOT NULL, case_id TEXT NOT NULL, outcome TEXT, outcome_at TEXT,
   PRIMARY KEY (letter_id, case_id)
 );
+CREATE TABLE IF NOT EXISTS monitoring_services (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, blurb TEXT, created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL
