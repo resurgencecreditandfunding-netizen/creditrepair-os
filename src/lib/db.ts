@@ -82,7 +82,7 @@ export function db(): DatabaseSync {
   d.prepare("INSERT OR IGNORE INTO tenants (id, slug, name, address, kind, legal_name) VALUES (?,?,?,?,?,?)").run(
     "tenant_default", "default",
     process.env.BRAND_NAME ?? "CreditOS",
-    process.env.BRAND_ADDRESS ?? "[Company street address, city, state, ZIP]",
+    process.env.BRAND_ADDRESS ?? "220 Sheila Ave, Daytona Beach, FL 32114",
     "direct",
     process.env.LEGAL_NAME ?? "Resurgence Consulting Services Incorporated",
   );
