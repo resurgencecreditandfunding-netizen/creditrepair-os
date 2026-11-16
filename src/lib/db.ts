@@ -89,7 +89,9 @@ export function db(): DatabaseSync {
   const d = new sqlite.DatabaseSync(file);
   d.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   d.exec(SCHEMA);
-  try { d.exec("ALTER TABLE tenants ADD COLUMN legal_name TEXT"); } catch { /* column already exists */ }
+  for (const col of ["legal_name TEXT", "sub_status TEXT NOT NULL DEFAULT 'exempt'", "stripe_customer_id TEXT", "stripe_subscription_id TEXT"]) {
+    try { d.exec(`ALTER TABLE tenants ADD COLUMN ${col}`); } catch { /* column already exists */ }
+  }
   // The platform's own tenant. BRAND_NAME is the product name; LEGAL_NAME is the contracting company.
   d.prepare("INSERT OR IGNORE INTO tenants (id, slug, name, address, kind, legal_name) VALUES (?,?,?,?,?,?)").run(
     "tenant_default", "default",

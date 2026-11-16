@@ -4,7 +4,8 @@ import { ConsoleBar, Flash } from "@/components/ui";
 import * as ops from "@/lib/console";
 import { requireOperator } from "@/lib/opsession";
 
-const KIND: Record<string, string> = { direct: "Platform", credit_repair: "Credit repair firm", tax_pro: "Tax professional" };
+const KIND: Record<string, string> = { direct: "Platform", credit_repair: "Credit repair firm", tax_pro: "Tax professional", funding_pro: "Funding professional" };
+const SUB: Record<string, string> = { exempt: "No charge", pending: "Not subscribed", active: "Subscribed", trialing: "Trial", past_due: "Payment overdue", canceled: "Cancelled", unpaid: "Unpaid" };
 
 export default async function Settings({ searchParams }: { searchParams: Promise<{ error?: string; ok?: string }> }) {
   const op = await requireOperator();
@@ -23,7 +24,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
 
         {tenants.map((t) => (
           <div className="card" key={t.id}>
-            <div className="row between"><h2 style={{ margin: 0 }}>{t.name}</h2><span className="pill">{KIND[t.kind] ?? t.kind} · {t.clients} client{t.clients === 1 ? "" : "s"}</span></div>
+            <div className="row between"><h2 style={{ margin: 0 }}>{t.name}</h2><span className="row" style={{ gap: 6 }}><span className={`pill ${["active", "trialing", "exempt"].includes(t.sub_status) ? "" : "red"}`}>{SUB[t.sub_status] ?? t.sub_status}</span><span className="pill">{KIND[t.kind] ?? t.kind} · {t.clients} client{t.clients === 1 ? "" : "s"}</span></span></div>
             <p className="small muted" style={{ margin: "6px 0 10px" }}>Contracting company: {t.legal_name ?? t.name} · {t.address}</p>
             <div className="label">Client sign-up link</div>
             <p><code>{origin}/?t={t.slug}</code></p>
@@ -77,7 +78,8 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <div className="field"><label htmlFor="legalName">Legal company name (goes on the contract)</label><input id="legalName" name="legalName" type="text" required /></div>
               <div className="field"><label htmlFor="taddr">Principal business address</label><input id="taddr" name="address" type="text" required /></div>
               <div className="field"><label htmlFor="kind">Type</label>
-                <select id="kind" name="kind"><option value="credit_repair">Credit repair firm</option><option value="tax_pro">Tax professional</option></select></div>
+                <select id="kind" name="kind"><option value="credit_repair">Credit repair firm</option><option value="tax_pro">Tax professional</option><option value="funding_pro">Funding professional</option></select></div>
+              <p className="fine">Companies you add here are not charged. Companies that sign up themselves pay the subscription.</p>
               <button className="btn dark" type="submit">Add company</button>
             </form>
           )}

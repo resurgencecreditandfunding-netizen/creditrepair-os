@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { goodStanding } from "./billing";
 import { getOperator, Operator } from "./console";
+import { getTenant } from "./store";
 
 const COOKIE = "cfo_operator";
 const secret = () => {
@@ -29,8 +31,10 @@ export async function currentOperator(): Promise<Operator | null> {
   if (Number(exp) < Date.now()) return null;
   return getOperator(id);
 }
-export async function requireOperator(): Promise<Operator> {
+/** Staff of a company without a live subscription are sent to the billing page. */
+export async function requireOperator(opts: { allowUnpaid?: boolean } = {}): Promise<Operator> {
   const op = await currentOperator();
   if (!op) redirect("/console/login");
+  if (!opts.allowUnpaid && op.role !== "platform" && !goodStanding(getTenant(op.tenant_id))) redirect("/console/billing");
   return op;
 }

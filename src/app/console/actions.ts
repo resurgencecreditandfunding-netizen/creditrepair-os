@@ -110,3 +110,36 @@ export async function removeMonitoringService(f: FormData) {
   try { ops.removeMonitoring(op, s(f, "id")); } catch (e) { back("/console/settings", "error", message(e)); }
   back("/console/settings", "ok", "Partner removed.");
 }
+
+// ---------- company sign-up and subscription ----------
+async function origin() {
+  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+  const h = await (await import("next/headers")).headers();
+  return `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+}
+export async function registerCompany(f: FormData) {
+  const billing = await import("@/lib/billing");
+  if (!billing.billingConfigured()) back("/console/signup", "error", "Sign-up is not open yet.");
+  if (f.get("terms") !== "on") back("/console/signup", "error", "Please confirm the compliance statement.");
+  let made: { tenantId: string; operatorId: string };
+  try {
+    made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password") });
+  } catch (e) { return back("/console/signup", "error", message(e)); }
+  await startOpSession(made.operatorId);
+  redirect("/console/billing");
+}
+export async function subscribe() {
+  const op = await requireOperator({ allowUnpaid: true });
+  const billing = await import("@/lib/billing");
+  let url = "";
+  try { url = await billing.createCheckout(store.getTenant(op.tenant_id), op.email, await origin()); } catch (e) { back("/console/billing", "error", message(e)); }
+  redirect(url);
+}
+export async function manageBilling() {
+  const op = await requireOperator({ allowUnpaid: true });
+  if (!ops.canManage(op)) back("/console/billing", "error", "Ask your company admin to manage billing.");
+  const billing = await import("@/lib/billing");
+  let url = "";
+  try { url = await billing.createPortal(store.getTenant(op.tenant_id), await origin()); } catch (e) { back("/console/billing", "error", message(e)); }
+  redirect(url);
+}

@@ -22,7 +22,7 @@ export function Flash({ error, ok }: { error?: string; ok?: string }) {
 }
 
 export function ConsoleBar({ active, name, signOut }: { active?: string; name: string; signOut: () => Promise<void> }) {
-  const items = [["", "Clients"], ["settings", "Companies and logins"]];
+  const items = [["", "Clients"], ["settings", "Companies and logins"], ["billing", "Billing"]];
   return (
     <header className="topbar">
       <div className="topbar-in">

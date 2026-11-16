@@ -34,7 +34,7 @@ export const isPlatform = (op: Operator) => op.role === "platform";
 export const canManage = (op: Operator) => op.role === "platform" || op.role === "admin";
 
 // ---------- tenants ----------
-export interface TenantInfo { id: string; slug: string; name: string; address: string; kind: string; legal_name: string | null; clients: number; operators: Row[] }
+export interface TenantInfo { id: string; slug: string; name: string; address: string; kind: string; legal_name: string | null; sub_status: string; clients: number; operators: Row[] }
 export function listTenants(op: Operator): TenantInfo[] {
   const d = db();
   const rows = (isPlatform(op) ? d.prepare("SELECT * FROM tenants ORDER BY name").all() : d.prepare("SELECT * FROM tenants WHERE id = ?").all(op.tenant_id)) as Row[];
@@ -147,4 +147,24 @@ export function addMonitoring(op: Operator, m: { name: string; url: string; blur
 export function removeMonitoring(op: Operator, id: string) {
   if (!isPlatform(op)) throw new Error("Only the platform owner can change credit monitoring partners.");
   db().prepare("DELETE FROM monitoring_services WHERE id = ?").run(id);
+}
+
+// ---------- self-serve sign-up for a new company ----------
+export interface Registration { company: string; legalName: string; address: string; kind: string; name: string; email: string; password: string }
+/** Creates the company (unpaid) and its first admin login. Access opens when the subscription starts. */
+export function registerCompany(r: Registration) {
+  for (const k of ["company", "legalName", "address", "name", "email"] as const) if (!r[k].trim()) throw new Error("Please fill in every field.");
+  if (r.password.length < 10) throw new Error("Password must be at least 10 characters.");
+  const email = r.email.trim().toLowerCase();
+  const d = db();
+  if (d.prepare("SELECT 1 FROM operators WHERE email = ?").get(email)) throw new Error("That email already has a login. Sign in instead.");
+  const base = r.company.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "company";
+  let slug = base;
+  for (let n = 2; d.prepare("SELECT 1 FROM tenants WHERE slug = ?").get(slug); n++) slug = `${base}-${n}`;
+  const tenantId = randomUUID();
+  const kind = r.kind === "tax_pro" || r.kind === "funding_pro" ? r.kind : "credit_repair";
+  d.prepare("INSERT INTO tenants (id, slug, name, address, kind, legal_name, sub_status) VALUES (?,?,?,?,?,?,'pending')")
+    .run(tenantId, slug, r.company.trim(), r.address.trim(), kind, r.legalName.trim());
+  const operatorId = createOperator({ tenantId, email, name: r.name.trim(), password: r.password, role: "admin" });
+  return { tenantId, operatorId };
 }

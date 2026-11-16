@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { parseReportFile, rewordLetter } from "@/lib/ai";
 import { sampleReport, simulateRefresh } from "@/lib/sample";
 import { currentClient, endSession, requestMeta, requireClient, startSession } from "@/lib/session";
+import { goodStanding } from "@/lib/billing";
 import * as store from "@/lib/store";
 import { ItemType, Outcome } from "@/lib/types";
 import { validateReport } from "@/lib/validate";
@@ -17,6 +18,7 @@ export async function startOnboarding(f: FormData) {
   const required = ["name", "email", "address", "city", "state", "zip", "dob", "ssnLast4", "businessStage"];
   if (required.some((k) => !s(f, k))) back("/start", "error", "Please fill in every required field.");
   if (!/^\d{4}$/.test(s(f, "ssnLast4"))) back("/start", "error", "Enter the last 4 digits of your Social Security number.");
+  if (!goodStanding(store.getTenant(s(f, "tenant") || "default"))) back("/start", "error", "This company is not accepting new clients right now.");
   const id = store.createClient({
     tenant: s(f, "tenant") || "default", name: s(f, "name"), email: s(f, "email"), phone: s(f, "phone"),
     address: s(f, "address"), city: s(f, "city"), state: s(f, "state").toUpperCase(), zip: s(f, "zip"),
