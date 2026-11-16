@@ -102,11 +102,12 @@ describe("credit monitoring partners", () => {
     expect(() => ops.addMonitoring(staffB, { name: "X", url: "https://x.example/a", blurb: "" })).toThrow(/platform owner/);
     expect(() => ops.addMonitoring(platform, { name: "X", url: "javascript:alert(1)", blurb: "" })).toThrow(/https/);
     expect(() => ops.addMonitoring(platform, { name: "X", url: "http://x.example", blurb: "" })).toThrow(/https/);
+    expect(ops.listMonitoring().map((m) => [m.name, m.url])).toEqual([["MyFreeScoreNow", "https://app.myfreescorenow.com/enroll/B03C9622"]]);
     const id = ops.addMonitoring(platform, { name: "ScoreWatch", url: "https://scorewatch.example/?aff=123", blurb: "3-bureau" });
-    expect(ops.listMonitoring()).toEqual([{ id, name: "ScoreWatch", url: "https://scorewatch.example/?aff=123", blurb: "3-bureau" }]);
+    expect(ops.listMonitoring()).toHaveLength(2);
     expect(() => ops.removeMonitoring(staffA, id)).toThrow(/platform owner/);
     ops.removeMonitoring(platform, id);
-    expect(ops.listMonitoring()).toEqual([]);
+    expect(ops.listMonitoring().map((m) => m.name)).toEqual(["MyFreeScoreNow"]);
   });
 });
 

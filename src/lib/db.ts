@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS letter_cases (
 CREATE TABLE IF NOT EXISTS monitoring_services (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, blurb TEXT, created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL
@@ -69,6 +70,14 @@ function seedAdmin(d: DatabaseSync) {
   if (!email || !password) return;
   d.prepare("INSERT INTO operators (id, tenant_id, email, name, password_hash, role, created_at) VALUES (?,?,?,?,?,?,?)")
     .run(randomUUID(), "tenant_default", email.toLowerCase(), "Platform admin", hashPassword(password), "platform", new Date().toISOString());
+}
+
+/** Starting credit monitoring partners. Added once; later changes are made in the console and are never overwritten. */
+function seedMonitoring(d: DatabaseSync) {
+  if (d.prepare("SELECT 1 FROM settings WHERE key = 'monitoring_seeded'").get()) return;
+  d.prepare("INSERT INTO monitoring_services (id, name, url, blurb, created_at) VALUES (?,?,?,?,?)")
+    .run(randomUUID(), "MyFreeScoreNow", "https://app.myfreescorenow.com/enroll/B03C9622", "3-bureau report and scores", new Date().toISOString());
+  d.prepare("INSERT INTO settings (key, value) VALUES ('monitoring_seeded', '1')").run();
 }
 
 const g = globalThis as unknown as { __cfoDb?: DatabaseSync };
@@ -90,6 +99,7 @@ export function db(): DatabaseSync {
     process.env.LEGAL_NAME ?? "Resurgence Consulting Services Incorporated",
   );
   seedAdmin(d);
+  seedMonitoring(d);
   g.__cfoDb = d;
   return d;
 }
