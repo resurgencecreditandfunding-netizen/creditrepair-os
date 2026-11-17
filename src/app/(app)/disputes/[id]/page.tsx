@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { approveLetter, discardLetter, mailLetter, reword, saveOutcome } from "@/app/actions";
+import { approveLetter, discardLetter, mailLetter, reword, saveOutcome, uploadReply, confirmReply } from "@/app/actions";
+import { ResponseUpload, Suggested } from "@/components/ResponseUpload";
+import { filesFor } from "@/lib/files";
+import { pendingSuggestions } from "@/lib/responses";
 import { PrintButton } from "@/components/PrintButton";
 import { Flash, TopBar } from "@/components/ui";
 import { aiEnabled } from "@/lib/ai";
@@ -16,6 +19,8 @@ export default async function Letter({ params, searchParams }: { params: Promise
   const sp = await searchParams;
   const l = store.getLetter(c.id, id) as any;
   if (!l) notFound();
+  const docs = filesFor(c.id, l.id);
+  const sugg = pendingSuggestions(l, docs);
   const Hidden = () => <input type="hidden" name="id" value={l.id} />;
 
   return (
@@ -68,15 +73,16 @@ export default async function Letter({ params, searchParams }: { params: Promise
             <div className="card">
               <div className="row between"><h2>Results</h2><PrintButton /></div>
               <p className="small muted">Mailed {fmt(l.mailed_at)} · tracking {l.tracking} · response due {fmt(l.due_at)}. Record what happened to each item when you hear back, or once the deadline passes.</p>
+              <ResponseUpload docs={docs} suggestions={sugg} upload={uploadReply} confirm={confirmReply} hidden={<Hidden />} fileBase="/files" aiOn={aiEnabled()} />
               <table><tbody>
                 {l.cases.map((x: any) => (
                   <tr key={x.id}>
-                    <td>{x.item_label}<div className="small muted">{BUREAU_NAME[x.bureau as keyof typeof BUREAU_NAME]}</div></td>
+                    <td>{x.item_label}<div className="small muted">{BUREAU_NAME[x.bureau as keyof typeof BUREAU_NAME]}</div>{!x.outcome && <Suggested s={sugg[x.id]} />}</td>
                     <td style={{ width: 300 }}>
                       {x.outcome ? <span className="pill dark">{OUTCOME_NAME[x.outcome as keyof typeof OUTCOME_NAME]}</span> : (
                         <form action={saveOutcome} className="row" style={{ flexWrap: "nowrap" }}>
                           <Hidden /><input type="hidden" name="caseId" value={x.id} />
-                          <select name="outcome" defaultValue="" required aria-label={`Result for ${x.item_label}`}>
+                          <select name="outcome" defaultValue={sugg[x.id]?.outcome ?? ""} required aria-label={`Result for ${x.item_label}`}>
                             <option value="" disabled>Result</option>
                             {Object.entries(OUTCOME_NAME).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                           </select>

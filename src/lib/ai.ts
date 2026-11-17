@@ -125,3 +125,46 @@ export async function parseReportFile(file: { name: string; type: string; bytes:
   const report = validateReport(parsed);
   return { ...report, source: `${isPdf ? "PDF" : "saved page"} (read by AI)` };
 }
+
+// ---------- bureau responses ----------
+export type ReadOutcome = "deleted" | "corrected" | "verified";
+export interface ResponseReading {
+  sender: string | null;
+  frivolous: boolean;
+  items: { n: number; outcome: ReadOutcome | null; quote: string }[];
+}
+
+/**
+ * Reads a bureau's or furnisher's reply and suggests a result for each item that was disputed.
+ * The client confirms every suggestion before anything is recorded.
+ */
+export async function readResponse(file: { mime: string; bytes: Buffer }, items: { n: number; label: string }[]): Promise<ResponseReading> {
+  if (!aiEnabled()) throw new Error("Reading responses is not switched on yet. Record each result by hand below.");
+  const media: Anthropic.Beta.BetaContentBlockParam = file.mime === "application/pdf"
+    ? { type: "document", source: { type: "base64", media_type: "application/pdf", data: file.bytes.toString("base64") } }
+    : { type: "image", source: { type: "base64", media_type: file.mime as "image/jpeg" | "image/png" | "image/webp", data: file.bytes.toString("base64") } };
+  const out = await ask(
+    `You read replies from credit bureaus and creditors to a consumer's dispute letter. For each disputed item listed, decide what the reply says happened to it.
+- "deleted": the reply says the item was deleted or removed.
+- "corrected": the reply says the item was updated or modified, but is still on the report.
+- "verified": the reply says the item was verified, remains, or is accurate as reported.
+- null: the reply does not mention the item, or you cannot tell. Never guess.
+Set "frivolous" to true only if the reply says the dispute is frivolous or irrelevant, or that the bureau will not investigate.
+Quote the exact short phrase from the reply that supports each decision (empty string when null).
+Output only JSON: {"sender": string|null, "frivolous": boolean, "items": [{"n": number, "outcome": "deleted"|"corrected"|"verified"|null, "quote": string}]}`,
+    [media, { type: "text", text: `Disputed items:\n${items.map((i) => `${i.n}. ${i.label}`).join("\n")}` }],
+  );
+  if (!out) throw new Error("The response could not be read. Record each result by hand below.");
+  let raw: any;
+  try { raw = JSON.parse(out.slice(out.indexOf("{"), out.lastIndexOf("}") + 1)); } catch { throw new Error("The response could not be read. Record each result by hand below."); }
+  return parseReading(raw, items.map((i) => i.n));
+}
+
+/** Keeps only well-formed answers about items that were actually in the letter. */
+export function parseReading(raw: any, valid: number[]): ResponseReading {
+  const ok = new Set(["deleted", "corrected", "verified"]);
+  const items = (Array.isArray(raw?.items) ? raw.items : [])
+    .filter((x: any) => valid.includes(Number(x?.n)))
+    .map((x: any) => ({ n: Number(x.n), outcome: ok.has(x.outcome) ? x.outcome : null, quote: typeof x.quote === "string" ? x.quote.slice(0, 300) : "" }));
+  return { sender: typeof raw?.sender === "string" ? raw.sender.slice(0, 120) : null, frivolous: raw?.frivolous === true, items };
+}

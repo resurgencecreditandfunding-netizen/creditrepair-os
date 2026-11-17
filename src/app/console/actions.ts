@@ -204,3 +204,24 @@ export async function runRemindersNow() {
   const r = await (await import("@/lib/reminders")).runReminders();
   back("/console/admin", "ok", r.skipped ? `Reminders not sent: ${r.skipped}.` : `Checked ${r.checked} clients. Sent ${r.sent} reminder${r.sent === 1 ? "" : "s"}${r.failed ? `, ${r.failed} failed` : ""}.`);
 }
+
+export async function opUploadReply(f: FormData) {
+  const { op, clientId, path } = await guard(f);
+  const lp = `${path}/letters/${s(f, "id")}`;
+  const file = f.get("file");
+  if (!(file instanceof File) || !file.size) back(lp, "error", "Choose a file first.");
+  const { uploadResponse } = await import("@/lib/responses");
+  let r: Awaited<ReturnType<typeof uploadResponse>>;
+  try { r = await uploadResponse(clientId, s(f, "id"), { filename: (file as File).name, bytes: Buffer.from(await (file as File).arrayBuffer()) }, actor(op)); }
+  catch (e) { return back(lp, "error", message(e)); }
+  back(lp, r.error ? "error" : "ok", r.error ?? (r.reading ? "Reply read. Check the suggested results, then confirm." : "Reply saved with this letter."));
+}
+export async function opConfirmReply(f: FormData) {
+  const { op, clientId, path } = await guard(f);
+  const lp = `${path}/letters/${s(f, "id")}`;
+  const { confirmSuggestions } = await import("@/lib/responses");
+  const { filesFor } = await import("@/lib/files");
+  let n = 0;
+  try { n = confirmSuggestions(clientId, s(f, "id"), filesFor(clientId, s(f, "id")), actor(op)); } catch (e) { back(lp, "error", message(e)); }
+  back(lp, "ok", `${n} result${n === 1 ? "" : "s"} recorded.`);
+}

@@ -69,6 +69,10 @@ CREATE TABLE IF NOT EXISTS reminders (
   client_id TEXT NOT NULL, step_key TEXT NOT NULL, first_seen_at TEXT NOT NULL, last_sent_at TEXT, count INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (client_id, step_key)
 );
+CREATE TABLE IF NOT EXISTS documents (
+  id TEXT PRIMARY KEY, client_id TEXT NOT NULL, letter_id TEXT, kind TEXT NOT NULL, filename TEXT NOT NULL,
+  mime TEXT NOT NULL, size INTEGER NOT NULL, path TEXT NOT NULL, meta TEXT, created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL

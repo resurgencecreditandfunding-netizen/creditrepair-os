@@ -195,3 +195,25 @@ export async function setReminderPrefs(f: FormData) {
   setPrefs(c.id, { reminders: f.get("reminders") === "on", texts: f.get("texts") === "on" });
   back("/documents", "ok", "Reminder settings saved.");
 }
+
+// ---------- bureau replies ----------
+export async function uploadReply(f: FormData) {
+  const c = await requireClient();
+  const id = s(f, "id"), path = `/disputes/${id}`;
+  const file = f.get("file");
+  if (!(file instanceof File) || !file.size) back(path, "error", "Choose a file first.");
+  const { uploadResponse } = await import("@/lib/responses");
+  let r: Awaited<ReturnType<typeof uploadResponse>>;
+  try { r = await uploadResponse(c.id, id, { filename: (file as File).name, bytes: Buffer.from(await (file as File).arrayBuffer()) }, "consumer"); }
+  catch (e) { return back(path, "error", message(e)); }
+  back(path, r.error ? "error" : "ok", r.error ?? (r.reading ? "Reply read. Check the suggested results below, then confirm." : "Reply saved with this letter."));
+}
+export async function confirmReply(f: FormData) {
+  const c = await requireClient();
+  const id = s(f, "id");
+  const { confirmSuggestions } = await import("@/lib/responses");
+  const { filesFor } = await import("@/lib/files");
+  let n = 0;
+  try { n = confirmSuggestions(c.id, id, filesFor(c.id, id), "consumer"); } catch (e) { back(`/disputes/${id}`, "error", message(e)); }
+  back(`/disputes/${id}`, "ok", `${n} result${n === 1 ? "" : "s"} recorded.`);
+}
