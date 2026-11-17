@@ -12,7 +12,7 @@ const STATUS: Record<string, [string, string]> = {
   mailed: ["Mailed, awaiting response", ""], closed: ["Closed", ""],
 };
 const CASE_STATUS: Record<string, string> = {
-  pending_letter: "Ready for next letter", in_letter: "In a letter", awaiting_response: "Awaiting response",
+  pending_letter: "Queued for next letter", in_letter: "In a letter", awaiting_response: "Awaiting response",
   resolved: "Resolved", exhausted: "All rounds used",
 };
 
@@ -46,7 +46,7 @@ export default async function Disputes({ searchParams }: { searchParams: Promise
 
         <div className="card row between">
           <div><h2 style={{ margin: 0 }}>{ready} item{ready === 1 ? "" : "s"} ready for a letter</h2>
-            <div className="small muted">One letter is drafted per bureau or company. Nothing is sent until you approve it.</div></div>
+            <div className="small muted">Strongest items go first, up to 5 accounts per letter, one open letter per bureau at a time. Nothing is sent until you approve it.</div></div>
           <form action={prepareLetters}><button className="btn accent" type="submit" disabled={!canServe || !ready || !!blocker}>Prepare letters</button></form>
         </div>
 

@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
 import { auditReport } from "./audit";
-import { addBusinessDays, addDays, today } from "./dates";
+import { addBusinessDays, addDays, fmt, today } from "./dates";
+import { LAW } from "./law";
 import { db } from "./db";
 import { Brand, contractDocs, disclosureDoc } from "./documents";
 import { composeLetter, LetterCase } from "./letters";
-import { caseKey, dueDate, groupFindings, nextStep, STEP_ROUND } from "./rounds";
+import { byPriority, caseKey, countsTowardCap, dueDate, firstStep, groupFindings, MAX_ITEMS_PER_LETTER, nextStep, STEP_ROUND } from "./rounds";
 import {
   Assertion, Bureau, BUREAU_NAME, CreditReport, Finding, ItemType, Outcome, Step,
 } from "./types";
@@ -102,6 +103,19 @@ export function saveReport(clientId: string, report: CreditReport, actor = "syst
     .run(randomUUID(), clientId, report.pulledAt, report.source, JSON.stringify(report), now());
   log(clientId, actor, "report_saved", { source: report.source, scores: report.scores, accounts: report.accounts.length });
 
+  // A deleted item that is back on the new report was reinserted: reopen it at the reinsertion step.
+  for (const c of getCases(clientId).filter((x) => x.status === "resolved" && x.resolution?.startsWith("Deleted"))) {
+    if (!itemPresent(report, c.item_type, c.item_id, c.bureau)) continue;
+    const fact = {
+      code: "REINSERTED", source: "system", itemType: c.item_type, itemId: c.item_id, itemLabel: c.item_label, bureau: c.bureau,
+      severity: "high", action: "delete", title: "Deleted item reinserted",
+      fact: `This item was deleted from my file on ${fmt(c.updated_at.slice(0, 10))} after my dispute. It has been put back without the certification and five-day notice the law requires.`,
+      statutes: [LAW.REINSERTION],
+    };
+    d.prepare("UPDATE cases SET status='pending_letter', step='REINSERTION', round=?, resolution=NULL, findings=?, updated_at=? WHERE id=?")
+      .run(STEP_ROUND.REINSERTION, JSON.stringify([fact, ...c.findings.filter((f) => f.code !== "REINSERTED")]), now(), c.id);
+    log(clientId, "system", "reinsertion_detected", { caseId: c.id, item: c.item_label, bureau: c.bureau });
+  }
   // An open case whose item no longer appears with that bureau has been deleted.
   for (const c of getCases(clientId).filter((x) => !["resolved", "exhausted"].includes(x.status))) {
     if (!itemPresent(report, c.item_type, c.item_id, c.bureau)) {
@@ -181,23 +195,34 @@ export function buildRound(clientId: string): number {
     if (!prior) {
       const acct = f.itemType === "account" ? report.accounts.find((a) => a.id === f.itemId) : undefined;
       d.prepare(`INSERT INTO cases (id, client_id, item_type, item_id, item_label, bureau, furnisher, is_collection, round, step, status, findings, created_at, updated_at)
-        VALUES (?,?,?,?,?,?,?,?,1,'CRA_INVESTIGATION','pending_letter',?,?,?)`)
+        VALUES (?,?,?,?,?,?,?,?,?,?,'pending_letter',?,?,?)`)
         .run(randomUUID(), clientId, f.itemType, f.itemId, f.itemLabel, f.bureau, acct?.creditor ?? null,
-          acct?.kind === "collection" ? 1 : 0, JSON.stringify(findings), now(), now());
-    } else if (prior.status === "pending_letter") {
+          acct?.kind === "collection" ? 1 : 0, STEP_ROUND[firstStep(findings)], firstStep(findings), JSON.stringify(findings), now(), now());
+    } else if (prior.status === "pending_letter" && prior.step !== "REINSERTION") {
       d.prepare("UPDATE cases SET findings=?, updated_at=? WHERE id=?").run(JSON.stringify(findings), now(), prior.id);
     }
   }
   // A case not yet mailed whose basis has gone (consumer confirmed it accurate) is dropped.
   for (const [key, c] of existing) {
-    if (c.status === "pending_letter" && c.round === 1 && !grouped.has(key)) d.prepare("DELETE FROM cases WHERE id=?").run(c.id);
+    if (c.status === "pending_letter" && c.round === 1 && !c.last_mailed_at && !grouped.has(key)) d.prepare("DELETE FROM cases WHERE id=?").run(c.id);
   }
 
-  const pending = getCases(clientId).filter((c) => c.status === "pending_letter");
-  const batches = new Map<string, typeof pending>();
+  // One open letter per bureau or company at a time: a second dispute while one is pending invites a "duplicate" dismissal.
+  const recipientOf = (c: Row) => c.step === "FURNISHER_DIRECT" ? `furnisher|${c.furnisher}` : `cra|${c.bureau}`;
+  const busy = new Set((d.prepare("SELECT recipient_type, recipient_name, recipient_bureau FROM letters WHERE client_id = ? AND status IN ('draft','attested','mailed')").all(clientId) as Row[])
+    .map((l) => l.recipient_type === "cra" ? `cra|${l.recipient_bureau}` : `furnisher|${l.recipient_name}`));
+  const pending = getCases(clientId).filter((c) => c.status === "pending_letter" && !busy.has(recipientOf(c)));
+  const groups = new Map<string, typeof pending>();
   for (const c of pending) {
-    const k = c.step === "FURNISHER_DIRECT" ? `furnisher|${c.furnisher}|${c.step}` : `cra|${c.bureau}|${c.step}`;
-    batches.set(k, [...(batches.get(k) ?? []), c]);
+    const k = `${recipientOf(c)}|${c.step}`;
+    groups.set(k, [...(groups.get(k) ?? []), c]);
+  }
+  // Strongest items first; past the per-letter limit, items wait for the next letter to this recipient.
+  const batches = new Map<string, typeof pending>();
+  for (const [k, list] of groups) {
+    const sorted = [...list].sort((a, b) => byPriority({ itemType: a.item_type, findings: a.findings }, { itemType: b.item_type, findings: b.findings }));
+    let counted = 0;
+    batches.set(k, sorted.filter((c) => !countsTowardCap(c.item_type) || ++counted <= MAX_ITEMS_PER_LETTER));
   }
   for (const [k, cases] of batches) {
     const [recipientType, who, step] = k.split("|") as ["cra" | "furnisher", string, Step];

@@ -94,7 +94,9 @@ export async function prepareLetters() {
   const c = await requireClient();
   let n = 0;
   try { n = store.buildRound(c.id); } catch (e) { back("/disputes", "error", message(e)); }
-  back("/disputes", "ok", n ? `${n} letter${n > 1 ? "s" : ""} drafted for your review.` : "Nothing new to send right now.");
+  const queued = store.getCases(c.id).some((x) => x.status === "pending_letter");
+  back("/disputes", "ok", n ? `${n} letter${n > 1 ? "s" : ""} drafted for your review.`
+    : queued ? "Your remaining items are queued. Each bureau gets one letter at a time, so they go out once the open letter to that bureau is answered." : "Nothing new to send right now.");
 }
 export async function approveLetter(f: FormData) {
   const c = await requireClient();

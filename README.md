@@ -60,6 +60,14 @@ npm test
 
 Platform owner only, and where the owner lands after sign-in. Shows estimated monthly revenue, operators by payment status, clients and results across every company, open funding requests, credit monitoring link clicks, and latest activity. The owner can suspend or reinstate a company, give free access, and edit a company's contract details. Owners and company admins can reset a staff password or remove a login under Companies and logins.
 
+## How letters are built
+
+- Round 1 is always a bureau reinvestigation request under § 611. Identity theft items instead get their own § 605B block request (4 business days), in a separate letter.
+- Each later round depends on the bureau's answer: verified → method of verification (§ 611(a)(7)); no response → deletion demand (§ 611(a)(5)(A)); frivolous → cure letter (§ 611(a)(3)); then a direct dispute to the furnisher (§ 623(a)(8) and § 623(a)(1)(B)); then a final demand with a CFPB complaint and § 611(b) statement.
+- A deleted item that reappears on a later report is reopened as a reinsertion dispute (§ 611(a)(5)(B)).
+- Inside a letter, items are ordered strongest first: personal information, outright deletions, then by impact, inquiries last. At most 5 accounts per letter (`MAX_ITEMS_PER_LETTER`), and only one open letter per bureau or furnisher at a time; the rest wait their turn.
+- Every citation lives in `src/lib/law.ts` for attorney review.
+
 ## Client journey, freeze step and alerts
 
 - The client dashboard shows a 13-step journey map under the scores: done, current (with its action), next and remaining steps. Staff see the same map, without actions, on the client's file.

@@ -81,6 +81,8 @@ export type Step =
   | "FAILURE_TO_INVESTIGATE"   // round 2 after no response
   | "CURE_FRIVOLOUS"           // round 2 after a frivolous notice
   | "FURNISHER_DIRECT"         // round 3
-  | "ESCALATION";              // round 4
+  | "ESCALATION"               // round 4
+  | "IDENTITY_THEFT_BLOCK"     // round 1, own track: identity theft items
+  | "REINSERTION";             // a deleted item came back
 
 export type Outcome = "deleted" | "corrected" | "verified" | "no_response" | "frivolous";

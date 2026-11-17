@@ -4,6 +4,15 @@ import {
   Account, Assertion, Bureau, BUREAU_NAME, BUREAUS, BureauView, CreditReport, Finding,
 } from "./types";
 
+/** First month of the final run of consecutive late months (YYYY-MM), or null. */
+export function streakStart(months: string[]): string | null {
+  const m = [...new Set(months)].sort();
+  if (!m.length) return null;
+  let i = m.length - 1;
+  while (i > 0 && monthsBetween(`${m[i - 1]}-01`, `${m[i]}-01`) === 1) i--;
+  return m[i];
+}
+
 const money = (n: number) => `$${n.toLocaleString("en-US")}`;
 const NEGATIVE = new Set(["late", "chargeoff", "collection", "repossession", "bankruptcy", "settled"]);
 
@@ -142,6 +151,21 @@ export function auditReport(report: CreditReport, assertions: Assertion[], asOf:
           statutes: [LAW.OBSOLETE],
         });
       }
+      if (a.kind === "collection" && a.isMedical && v.dofd && v.status !== "paid" && v.balance >= 500 && asOf < addDays(v.dofd, 365)) push(b, {
+        code: "MEDICAL_UNDER_1YR", severity: "medium", action: "delete",
+        title: "Medical collection reported before one year",
+        fact: `This is a medical collection whose date of first delinquency is ${fmt(v.dofd)}. Under your published policy, medical collections are not reported until a full year after the delinquency.`,
+        statutes: [LAW.MEDICAL_POLICY],
+      });
+      if (["chargeoff", "collection"].includes(v.status) && v.dofd && v.lates?.length) {
+        const start = streakStart(v.lates.map((l) => l.month));
+        if (start && start < v.dofd.slice(0, 7)) push(b, {
+          code: "DOFD_AFTER_LATES", severity: "high", action: "correct",
+          title: "Delinquency date is later than the late payments show",
+          fact: `You report the date of first delinquency as ${fmt(v.dofd)}, but the payment history shows the account continuously late from ${start}. A date of first delinquency set later than the first missed payment extends how long the item is reported.`,
+          statutes: [LAW.FURNISHER_DOFD, LAW.OBSOLETE_CLOCK, LAW.ACCURACY],
+        });
+      }
       if (a.kind === "collection" && a.isMedical && (v.status === "paid" || v.balance < 500)) push(b, {
         code: "MEDICAL_POLICY", severity: "medium", action: "delete",
         title: "Medical collection that bureau policy excludes",
@@ -175,6 +199,21 @@ export function auditReport(report: CreditReport, assertions: Assertion[], asOf:
         }
       }
     }
+  }
+
+  // --- The same account listed twice with one bureau.
+  const seen = new Map<string, string>();
+  for (const a of report.accounts) for (const b of BUREAUS) {
+    if (!a.bureaus[b]) continue;
+    const key = `${b}|${a.creditor.trim().toLowerCase()}|${a.accountMask.replace(/\D/g, "").slice(-4)}`;
+    const first = seen.get(key);
+    if (!first) { seen.set(key, a.id); continue; }
+    out.push({
+      code: "DUPLICATE_TRADELINE", source: "system", itemType: "account", itemId: a.id, itemLabel: accountLabel(a), bureau: b,
+      severity: "high", action: "delete", title: "Same account listed twice",
+      fact: `This account appears twice in my file under the same creditor and account number ending ${a.accountMask.replace(/\D/g, "").slice(-4)}. One account can only be reported once.`,
+      statutes: [LAW.ACCURACY],
+    });
   }
 
   // --- Bankruptcies: 10 years from the filing date.

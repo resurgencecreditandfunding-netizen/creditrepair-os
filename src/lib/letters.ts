@@ -1,6 +1,6 @@
 import { fmt } from "./dates";
 import { BUREAU_ADDRESS, LAW } from "./law";
-import { STEP_NAME } from "./rounds";
+import { byPriority, STEP_NAME } from "./rounds";
 import { Bureau, BUREAU_NAME, Finding, ItemType, Step } from "./types";
 
 export interface LetterClient {
@@ -49,7 +49,11 @@ const INTRO: Record<Step, (i: LetterInput) => string> = {
   CURE_FRIVOLOUS: (i) =>
     `I disputed the items below${prior(i)}, and you declined to investigate, describing my dispute as frivolous or irrelevant. It is not. I am the consumer, I prepared this dispute about my own file, and for each item I identify the specific information I dispute and why.\n\nI enclose proof of my identity and address. With this letter you have everything required to investigate (${LAW.FRIVOLOUS}), and I ask that you do so.`,
   FURNISHER_DIRECT: () =>
-    `I am writing to you directly because you furnish the information below to the consumer reporting agencies, and it is inaccurate. This is a direct dispute under ${LAW.FURNISHER_DIRECT}.\n\nPlease conduct a reasonable investigation, review the information I have provided, and report the results to me within 30 days. If the information is inaccurate, notify every consumer reporting agency you furnished it to and correct it (${LAW.FURNISHER_UPDATE}). While this dispute is open, the account must be reported as disputed (${LAW.FURNISHER_DISPUTE_FLAG}).`,
+    `I am writing to you directly because you furnish the information below to the consumer reporting agencies, and it is inaccurate. This is a direct dispute under ${LAW.FURNISHER_DIRECT}. It is also my notice, sent to the address you designate for disputes, that this specific information is inaccurate: once notified, you may not continue to furnish it if it is in fact inaccurate (${LAW.FURNISHER_NOTICE}).\n\nPlease conduct a reasonable investigation, review the information I have provided, and report the results to me within 30 days. If the information is inaccurate, notify every consumer reporting agency you furnished it to and correct it (${LAW.FURNISHER_UPDATE}). While this dispute is open, the account must be reported as disputed (${LAW.FURNISHER_DISPUTE_FLAG}).`,
+  IDENTITY_THEFT_BLOCK: () =>
+    `I am a victim of identity theft. The items below resulted from that theft. I did not open them, use them, or authorize them.\n\nUnder ${LAW.ID_THEFT_BLOCK}, I ask that you block this information from my file within four business days of receiving this letter and notify each company that furnished it. I enclose proof of my identity, a copy of my ${LAW.FTC_ID_THEFT_REPORT}, and the identification of each item below. If you decline or rescind any block, you must notify me as required by ${LAW.ID_THEFT_DECLINE}.`,
+  REINSERTION: (i) =>
+    `The items below were deleted from my file after my earlier dispute${prior(i)}. They now appear again.\n\nDeleted information may not be reinserted unless the furnisher first certifies that it is complete and accurate, and you must notify me in writing within five business days of the reinsertion, including the name, address and telephone number of the furnisher (${LAW.REINSERTION}). I received no such notice. Please delete these items again. If you contend the reinsertion was lawful, send me the certification and the notice the law requires.`,
   ESCALATION: (i) =>
     `This is my final request regarding the items below. I have disputed them with ${i.recipientName} and with the furnisher, and the errors I identified remain in my file.\n\nI am filing a complaint with the Consumer Financial Protection Bureau describing this history. If the items are not corrected or deleted, I ask that you add my statement of dispute to my file (${LAW.CONSUMER_STATEMENT}). I am also keeping a full record of this correspondence in case I need to pursue my rights under ${LAW.LIABILITY}.`,
 };
@@ -65,6 +69,8 @@ const CLOSING: Record<Step, string> = {
   CURE_FRIVOLOUS: `Please send me written notice of the results and an updated copy of my report (${LAW.RESULTS_NOTICE}).`,
   FURNISHER_DIRECT: `Please send your written response to the address above.`,
   ESCALATION: `Please respond in writing within 30 days.`,
+  IDENTITY_THEFT_BLOCK: `Please confirm each block in writing.`,
+  REINSERTION: `Please confirm the deletions in writing and send me an updated copy of my report (${LAW.RESULTS_NOTICE}).`,
 };
 
 export function recipientAddress(i: Pick<LetterInput, "recipientType" | "recipientBureau" | "recipientName">) {
@@ -84,7 +90,7 @@ export function composeLetter(i: LetterInput): string {
     `RE: ${STEP_NAME[i.step]}\nName: ${c.name}\nDate of birth: ${fmt(c.dob)}\nSocial Security number: XXX-XX-${c.ssnLast4}`,
     `To whom it may concern:`,
     INTRO[i.step](i),
-    ...i.cases.map((x, n) => itemBlock(x, n + 1, i.recipientType === "furnisher")),
+    ...[...i.cases].sort(byPriority).map((x, n) => itemBlock(x, n + 1, i.recipientType === "furnisher")),
     CLOSING[i.step],
     ...(collector ? [`If you are collecting this debt on behalf of another company, I also request validation of the debt, including the name and address of the original creditor (${LAW.FDCPA_VALIDATION}). A debt I have disputed must be reported as disputed (${LAW.FDCPA_DISPUTED}).`] : []),
     `Enclosures: copy of my government-issued photo ID; proof of my current address${i.cases.some((x) => x.findings.some((f) => f.code === "CONSUMER_IDENTITY_THEFT")) ? "; identity theft report" : ""}.`,

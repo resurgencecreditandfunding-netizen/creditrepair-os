@@ -4,6 +4,7 @@ export const LAW = {
   FORWARD_TO_FURNISHER: "FCRA § 611(a)(2), 15 U.S.C. § 1681i(a)(2)",
   FRIVOLOUS: "FCRA § 611(a)(3), 15 U.S.C. § 1681i(a)(3)",
   DELETE_UNVERIFIED: "FCRA § 611(a)(5)(A), 15 U.S.C. § 1681i(a)(5)(A)",
+  REINSERTION: "FCRA § 611(a)(5)(B), 15 U.S.C. § 1681i(a)(5)(B)",
   RESULTS_NOTICE: "FCRA § 611(a)(6), 15 U.S.C. § 1681i(a)(6)",
   PROCEDURE_DESCRIPTION: "FCRA § 611(a)(6)(B)(iii) and § 611(a)(7), 15 U.S.C. § 1681i(a)(6)(B)(iii), (a)(7)",
   CONSUMER_STATEMENT: "FCRA § 611(b), 15 U.S.C. § 1681i(b)",
@@ -11,8 +12,10 @@ export const LAW = {
   OBSOLETE: "FCRA § 605(a), 15 U.S.C. § 1681c(a)",
   OBSOLETE_CLOCK: "FCRA § 605(c), 15 U.S.C. § 1681c(c)",
   ID_THEFT_BLOCK: "FCRA § 605B, 15 U.S.C. § 1681c-2",
+  ID_THEFT_DECLINE: "FCRA § 605B(c), 15 U.S.C. § 1681c-2(c)",
   PERMISSIBLE_PURPOSE: "FCRA § 604, 15 U.S.C. § 1681b",
   FURNISHER_ACCURACY: "FCRA § 623(a)(1), 15 U.S.C. § 1681s-2(a)(1)",
+  FURNISHER_NOTICE: "FCRA § 623(a)(1)(B), 15 U.S.C. § 1681s-2(a)(1)(B)",
   FURNISHER_UPDATE: "FCRA § 623(a)(2), 15 U.S.C. § 1681s-2(a)(2)",
   FURNISHER_DISPUTE_FLAG: "FCRA § 623(a)(3), 15 U.S.C. § 1681s-2(a)(3)",
   FURNISHER_DOFD: "FCRA § 623(a)(5), 15 U.S.C. § 1681s-2(a)(5)",
@@ -22,6 +25,7 @@ export const LAW = {
   FDCPA_DISPUTED: "FDCPA § 807(8), 15 U.S.C. § 1692e(8)",
   LIABILITY: "FCRA §§ 616–617, 15 U.S.C. §§ 1681n–1681o",
   MEDICAL_POLICY: "Equifax, Experian and TransUnion joint medical collection reporting policy (2022–2023)",
+  FTC_ID_THEFT_REPORT: "Identity Theft Report filed at IdentityTheft.gov",
 } as const;
 
 export const BUREAU_ADDRESS = {
