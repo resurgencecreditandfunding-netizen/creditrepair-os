@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
-import { addFreezeBureau, addMonitoringService, addOperator, addTenant, removeFreezeBureau, removeLogin, removeMonitoringService, resetLoginPassword, saveAlerts, signOutOperator, testAlerts } from "@/app/console/actions";
+import { addFreezeBureau, addMonitoringService, addOperator, addTenant, removeFreezeBureau, removeLogin, removeMonitoringService, resetLoginPassword, saveAlerts, saveBranding, signOutOperator, testAlerts } from "@/app/console/actions";
 import { listFreezeBureaus } from "@/lib/freeze";
+import { brandBar, companyLink } from "@/lib/branding";
 import { emailConfigured, smsConfigured } from "@/lib/notify";
 import { getTenant } from "@/lib/store";
 import { ConsoleBar, Flash } from "@/components/ui";
@@ -54,7 +55,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             <div className="row between"><h2 style={{ margin: 0 }}>{t.name}</h2><span className="row" style={{ gap: 6 }}><span className={`pill ${["active", "trialing", "exempt"].includes(t.sub_status) ? "" : "accent"}`}>{SUB[t.sub_status] ?? t.sub_status}</span><span className="pill">{KIND[t.kind] ?? t.kind} · {t.clients} client{t.clients === 1 ? "" : "s"}</span></span></div>
             <p className="small muted" style={{ margin: "6px 0 10px" }}>Contracting company: {t.legal_name ?? t.name} · {t.address}</p>
             <div className="label">Client sign-up link</div>
-            <p><code>{origin}/?t={t.slug}</code></p>
+            <p><code>{t.id === "tenant_default" ? origin : companyLink(t.slug, origin)}</code></p>
             <div className="label">Staff logins</div>
             {t.operators.length === 0 ? <p className="small muted">None yet.</p> : (
               <table><tbody>{t.operators.map((o: any) => (
@@ -99,6 +100,25 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <button className="btn dark" type="submit">Add partner</button>
             </form>
           </div>
+        )}
+
+        {ops.canManage(op) && !ops.isPlatform(op) && (
+          <form action={saveBranding} className="card">
+            <h2>Your branding</h2>
+            <p className="small muted">Your clients see your logo and colour on every page instead of ours.</p>
+            <div className="row" style={{ alignItems: "flex-end" }}>
+              <div style={{ flex: "2 1 260px" }}><label htmlFor="logo">Logo (PNG, JPG or WebP, under 300 KB; a wide logo on a transparent or dark background works best)</label>
+                <input id="logo" name="logo" type="file" accept="image/png,image/jpeg,image/webp" /></div>
+              <div style={{ flex: "0 0 140px" }}><label htmlFor="accent">Button colour</label><input id="accent" name="accent" type="color" defaultValue={mine.accent ?? "#d04c1c"} style={{ height: 40, padding: 2 }} /></div>
+              <button className="btn dark" type="submit">Save branding</button>
+            </div>
+            {brandBar(mine).logo && (
+              <div className="row" style={{ marginTop: 12, background: "var(--black)", padding: 12, borderRadius: 8 }}>
+                <img src={brandBar(mine).logo} alt="Your logo" style={{ height: 32 }} />
+                <label className="check" style={{ color: "#fff", margin: 0 }}><input type="checkbox" name="removeLogo" /><span>Remove logo</span></label>
+              </div>
+            )}
+          </form>
         )}
 
         {ops.isPlatform(op) && (

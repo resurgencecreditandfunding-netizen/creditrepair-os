@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requestSignIn } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
-import { PRODUCT } from "@/lib/brand";
+import { brandBar, tenantForVisit } from "@/lib/branding";
 import { currentClient } from "@/lib/session";
 import { signInAvailable } from "@/lib/signin";
 
@@ -13,7 +13,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const sp = await searchParams;
   return (
     <>
-      <TopBar brand={PRODUCT} nav={false} />
+      <TopBar {...brandBar(await tenantForVisit())} nav={false} />
       <main className="wrap" style={{ maxWidth: 460 }}>
         <h1>Sign in</h1>
         <p className="muted">No password needed. We send a one-time link to the email or mobile number you signed up with.</p>

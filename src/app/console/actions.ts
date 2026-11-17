@@ -250,3 +250,13 @@ export async function saveShares(f: FormData) {
   } catch (e) { back("/console/funding", "error", message(e)); }
   back("/console/funding", "ok", "Revenue share saved. It applies to deals marked funded from now on.");
 }
+
+export async function saveBranding(f: FormData) {
+  const op = await requireOperator();
+  if (!ops.canManage(op)) back("/console/settings", "error", "Ask your company admin to change branding.");
+  const file = f.get("logo");
+  const logo = file instanceof File && file.size ? Buffer.from(await file.arrayBuffer()) : null;
+  try { (await import("@/lib/branding")).setBranding(op.tenant_id, { logo, removeLogo: f.get("removeLogo") === "on", accent: s(f, "accent") }); }
+  catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Branding saved. Your clients see it on their next page load.");
+}

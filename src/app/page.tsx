@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { TopBar } from "@/components/ui";
 import { PRODUCT, TAGLINE } from "@/lib/brand";
-import { getTenant } from "@/lib/store";
+import { brandBar, tenantForVisit } from "@/lib/branding";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ t?: string }> }) {
   const { t } = await searchParams;
-  const tenant = getTenant(t ?? "default");
-  const start = t ? `/start?t=${encodeURIComponent(t)}` : "/start";
+  const tenant = await tenantForVisit(t);
+  const start = tenant.id !== "tenant_default" ? `/start?t=${encodeURIComponent(tenant.slug)}` : "/start";
   return (
     <>
-      {tenant.name !== PRODUCT && <TopBar brand={tenant.name} nav={false} />}
+      {tenant.id !== "tenant_default" && <TopBar {...brandBar(tenant)} nav={false} />}
       <section className="hero">
         <div className="hero-in">
-          {tenant.name === PRODUCT && <img className="hero-logo" src="/logo.png" alt={`${PRODUCT}. ${TAGLINE}.`} width={1200} height={247} />}
+          {tenant.id === "tenant_default" && <img className="hero-logo" src="/logo.png" alt={`${PRODUCT}. ${TAGLINE}.`} width={1200} height={247} />}
           <h1>Fix what is wrong on your credit. <em>Then get funded.</em></h1>
           <p>We find the errors on your credit reports, prepare each dispute in your name, and track every deadline. It costs you nothing. When your score improves, your business funding options open.</p>
           <div className="row"><Link href={start} className="btn accent big">Start free</Link><Link href="/login" className="btn big" style={{ background: "transparent", color: "#fff", borderColor: "#52525b" }}>Sign in</Link></div>

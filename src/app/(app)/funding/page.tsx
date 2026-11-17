@@ -5,6 +5,7 @@ import { fundingStatus, FUNDING_RULES } from "@/lib/funding";
 import { freezeProgress } from "@/lib/freeze";
 import { DEAL_STATUS, dealsFor, openDeal } from "@/lib/funding-deals";
 import { requireClient } from "@/lib/session";
+import { brandBarFor } from "@/lib/branding";
 import * as store from "@/lib/store";
 
 export default async function Funding({ searchParams }: { searchParams: Promise<{ error?: string; ok?: string }> }) {
@@ -17,7 +18,7 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
   const requested = !!openDeal(c.id);
   return (
     <>
-      <TopBar brand={store.brandOf(c).name} active="funding" />
+      <TopBar {...brandBarFor(c)} active="funding" />
       <main className="wrap">
         <div className="row between"><h1>Funding</h1><span className={`pill ${f.unlocked ? "dark" : "accent"}`}>{f.unlocked ? "Open" : "Locked"}</span></div>
         <p className="muted">{f.reason}</p>

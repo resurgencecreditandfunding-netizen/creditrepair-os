@@ -3,6 +3,7 @@ import { signAll } from "@/app/actions";
 import { TopBar } from "@/components/ui";
 import { fmt, today } from "@/lib/dates";
 import { contractDocs } from "@/lib/documents";
+import { brandBarFor } from "@/lib/branding";
 import { currentClient } from "@/lib/session";
 import { brandOf, cancelDeadline } from "@/lib/store";
 
@@ -16,7 +17,7 @@ export default async function Sign() {
   const docs = contractDocs(brand, fmt(deadline));
   return (
     <>
-      <TopBar brand={brand.name} nav={false} />
+      <TopBar {...brandBarFor(c)} nav={false} />
       <main className="wrap narrow">
         <ol className="steps"><li className="done">Your details</li><li className="done">Your rights</li><li className="now">Sign</li></ol>
         <h1>Review and sign</h1>

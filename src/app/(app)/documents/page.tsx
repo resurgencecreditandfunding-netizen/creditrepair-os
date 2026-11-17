@@ -2,6 +2,7 @@ import { cancel, setReminderPrefs, signOut } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
 import { fmt } from "@/lib/dates";
 import { requireClient } from "@/lib/session";
+import { brandBarFor } from "@/lib/branding";
 import * as store from "@/lib/store";
 
 export default async function Documents({ searchParams }: { searchParams: Promise<{ error?: string; ok?: string }> }) {
@@ -11,7 +12,7 @@ export default async function Documents({ searchParams }: { searchParams: Promis
   const events = store.getLog(c.id);
   return (
     <>
-      <TopBar brand={store.brandOf(c).name} active="documents" />
+      <TopBar {...brandBarFor(c)} active="documents" />
       <main className="wrap">
         <h1>Documents</h1>
         <p className="muted">Everything you received and signed, exactly as it was shown to you.</p>

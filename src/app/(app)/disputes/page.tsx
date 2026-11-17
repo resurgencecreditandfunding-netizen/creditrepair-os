@@ -4,6 +4,7 @@ import { Flash, TopBar } from "@/components/ui";
 import { fmt } from "@/lib/dates";
 import { groupFindings, STEP_NAME } from "@/lib/rounds";
 import { requireClient } from "@/lib/session";
+import { brandBarFor } from "@/lib/branding";
 import * as store from "@/lib/store";
 import { BUREAU_NAME } from "@/lib/types";
 
@@ -30,7 +31,7 @@ export default async function Disputes({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <TopBar brand={store.brandOf(c).name} active="disputes" />
+      <TopBar {...brandBarFor(c)} active="disputes" />
       <main className="wrap">
         <h1>Disputes</h1>
         <p className="muted">Round 1 always asks the bureau to reinvestigate and verify. What follows depends on how they answer.</p>

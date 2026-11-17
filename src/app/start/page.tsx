@@ -3,18 +3,18 @@ import { redirect } from "next/navigation";
 import { startOnboarding } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
 import { currentClient } from "@/lib/session";
-import { getTenant } from "@/lib/store";
+import { brandBar, tenantForVisit } from "@/lib/branding";
 
 export default async function Start({ searchParams }: { searchParams: Promise<{ t?: string; error?: string }> }) {
   const { t, error } = await searchParams;
   if (await currentClient()) redirect("/dashboard");
-  const tenant = getTenant(t ?? "default");
+  const tenant = await tenantForVisit(t);
   const F = ({ name, label, type = "text", ...rest }: { name: string; label: string; type?: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
     <div className="field"><label htmlFor={name}>{label}</label><input id={name} name={name} type={type} required {...rest} /></div>
   );
   return (
     <>
-      <TopBar brand={tenant.name} nav={false} />
+      <TopBar {...brandBar(tenant)} nav={false} />
       <main className="wrap narrow">
         <ol className="steps"><li className="now">Your details</li><li>Your rights</li><li>Sign</li></ol>
         <h1>Tell us who you are</h1>

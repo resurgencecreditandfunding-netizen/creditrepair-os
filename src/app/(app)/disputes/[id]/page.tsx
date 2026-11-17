@@ -10,6 +10,7 @@ import { aiEnabled } from "@/lib/ai";
 import { fmt } from "@/lib/dates";
 import { OUTCOME_NAME, STEP_NAME } from "@/lib/rounds";
 import { requireClient } from "@/lib/session";
+import { brandBarFor } from "@/lib/branding";
 import * as store from "@/lib/store";
 import { BUREAU_NAME } from "@/lib/types";
 
@@ -25,7 +26,7 @@ export default async function Letter({ params, searchParams }: { params: Promise
 
   return (
     <>
-      <TopBar brand={store.brandOf(c).name} active="disputes" />
+      <TopBar {...brandBarFor(c)} active="disputes" />
       <main className="wrap" style={{ maxWidth: 860 }}>
         <div className="noprint">
           <Link href="/disputes" className="small muted">← All disputes</Link>

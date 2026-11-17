@@ -6,6 +6,7 @@ import { journey } from "@/lib/journey";
 import { fmt, today } from "@/lib/dates";
 import { fundingStatus } from "@/lib/funding";
 import { requireClient } from "@/lib/session";
+import { brandBarFor } from "@/lib/branding";
 import * as store from "@/lib/store";
 import { BUREAU_NAME, BUREAUS } from "@/lib/types";
 
@@ -26,7 +27,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <TopBar brand={store.brandOf(c).name} active="dashboard" />
+      <TopBar {...brandBarFor(c)} active="dashboard" />
       <main className="wrap">
         <h1>Welcome, {c.name.split(" ")[0]}</h1>
         <p className="muted">Free credit repair, then funding.</p>

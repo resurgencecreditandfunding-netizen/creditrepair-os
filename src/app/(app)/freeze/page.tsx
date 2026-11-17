@@ -4,6 +4,7 @@ import { Flash, TopBar } from "@/components/ui";
 import { fmt } from "@/lib/dates";
 import { freezeProgress } from "@/lib/freeze";
 import { requireClient } from "@/lib/session";
+import { brandBarFor } from "@/lib/branding";
 import * as store from "@/lib/store";
 
 export default async function Freeze({ searchParams }: { searchParams: Promise<{ error?: string; ok?: string }> }) {
@@ -12,7 +13,7 @@ export default async function Freeze({ searchParams }: { searchParams: Promise<{
   const p = freezeProgress(c);
   return (
     <>
-      <TopBar brand={store.brandOf(c).name} />
+      <TopBar {...brandBarFor(c)} />
       <main className="wrap" style={{ maxWidth: 860 }}>
         <Link href="/dashboard" className="small muted">← Dashboard</Link>
         <div className="row between" style={{ marginTop: 8 }}>

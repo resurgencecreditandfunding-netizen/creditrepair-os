@@ -9,12 +9,13 @@ export function ConsoleBrand() {
   return <Link href="/console" className="brand"><img src="/wordmark.png" alt={PRODUCT} width={720} height={119} /><small>Operator console</small></Link>;
 }
 
-export function TopBar({ brand, active, nav = true }: { brand: string; active?: string; nav?: boolean }) {
+export function TopBar({ brand, logo, accent, active, nav = true }: { brand: string; logo?: string; accent?: string; active?: string; nav?: boolean }) {
   const items = [["dashboard", "Dashboard"], ["report", "Credit report"], ["disputes", "Disputes"], ["funding", "Funding"], ["documents", "Documents"]];
   return (
     <header className="topbar">
       <div className="topbar-in">
-        <Link href={nav ? "/dashboard" : "/"} className="brand"><Mark brand={brand} /></Link>
+        {accent && <style>{`:root{--accent:${accent};--accent-dark:${accent};--accent-soft:${accent}1a}`}</style>}
+        <Link href={nav ? "/dashboard" : "/"} className="brand">{logo ? <img src={logo} alt={brand} style={{ height: 30, maxWidth: 200, objectFit: "contain" }} /> : <Mark brand={brand} />}</Link>
         {nav && (
           <nav className="nav">
             {items.map(([k, label]) => <Link key={k} href={`/${k}`} className={active === k ? "on" : ""}>{label}</Link>)}

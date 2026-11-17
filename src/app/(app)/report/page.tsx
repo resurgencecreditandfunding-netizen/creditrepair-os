@@ -5,6 +5,7 @@ import { aiEnabled } from "@/lib/ai";
 import { listMonitoring } from "@/lib/console";
 import { fmt } from "@/lib/dates";
 import { requireClient } from "@/lib/session";
+import { brandBarFor } from "@/lib/branding";
 import * as store from "@/lib/store";
 import { BUREAU_NAME, BUREAUS, Finding, ItemType } from "@/lib/types";
 
@@ -82,7 +83,7 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
 
   return (
     <>
-      <TopBar brand={store.brandOf(c).name} active="report" />
+      <TopBar {...brandBarFor(c)} active="report" />
       <main className="wrap">
         <h1>Credit report</h1>
         <p className="muted">{report ? `Pulled ${fmt(report.pulledAt)} · source: ${report.source}` : "No report connected yet."}</p>
