@@ -60,6 +60,12 @@ npm test
 
 Platform owner only, and where the owner lands after sign-in. Shows estimated monthly revenue, operators by payment status, clients and results across every company, open funding requests, credit monitoring link clicks, and latest activity. The owner can suspend or reinstate a company, give free access, and edit a company's contract details. Owners and company admins can reset a staff password or remove a login under Companies and logins.
 
+## Two gateways
+
+- **Consumers:** `leverageiq100.com` (the consumer sales page; Get started goes to `/start`).
+- **Operators:** `leverageiq100.com/partners` (or the short link `/pro`), the operator sales page; Get started goes to `/console/signup`.
+- Each page links to the other. Tag ad links with `utm_source`, `utm_campaign` and `utm_content`; the last tagged link a person clicked in the 30 days before signing up is saved on their client or company record and totalled on the Business page under "Where sign-ups come from".
+
 ## How letters are built
 
 - Round 1 is always a bureau reinvestigation request under § 611. Identity theft items instead get their own § 605B block request (4 business days), in a separate letter.

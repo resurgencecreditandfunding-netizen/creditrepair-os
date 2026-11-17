@@ -8,6 +8,7 @@ import { fundingStatus } from "@/lib/funding";
 import { requireOperator } from "@/lib/opsession";
 import { freezeProgress, letterBlocker } from "@/lib/freeze";
 import { journey } from "@/lib/journey";
+import { parseSource, sourceLabel } from "@/lib/attribution";
 import { JourneyMap } from "@/components/JourneyMap";
 import { groupFindings, STEP_NAME } from "@/lib/rounds";
 import * as store from "@/lib/store";
@@ -49,6 +50,7 @@ export default async function Client({ params, searchParams }: { params: Promise
           <h1>{c.name}</h1>
           <span className={`pill ${c.status === "active" ? "dark" : "accent"}`}>{ops.stageName(sum.stage)}</span>
         </div>
+        {c.source && <p className="small muted" style={{ margin: "-4px 0 6px" }}>Came from: {sourceLabel(parseSource(c.source))}</p>}
         <p className="muted">{c.email}{c.phone ? ` · ${c.phone}` : ""} · {c.city}, {c.state} · {BUSINESS[c.business_stage] ?? c.business_stage}{c.funding_goal ? ` · goal: ${c.funding_goal}` : ""}</p>
         <Flash {...sp} />
 

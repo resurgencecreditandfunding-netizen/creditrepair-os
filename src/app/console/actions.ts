@@ -125,7 +125,7 @@ export async function registerCompany(f: FormData) {
   if (f.get("terms") !== "on") back("/console/signup", "error", "Please confirm the compliance statement.");
   let made: { tenantId: string; operatorId: string };
   try {
-    made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password") });
+    made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password"), source: (await (await import("next/headers")).cookies()).get((await import("@/lib/attribution")).SOURCE_COOKIE)?.value ?? null });
   } catch (e) { return back("/console/signup", "error", message(e)); }
   void (await import("@/lib/notify")).operatorEvent(made.tenantId, "registered");
   await startOpSession(made.operatorId);

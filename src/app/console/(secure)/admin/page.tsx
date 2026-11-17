@@ -93,6 +93,25 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           <Stat label="Funding open" value={b.funding.open} sub={`${b.funding.requests.length} asked for a review`} hot={b.funding.requests.length > 0} />
         </div>
 
+        <h2 style={{ marginTop: 24 }}>Where sign-ups come from</h2>
+        <div className="grid g2">
+          <div className="card tablewrap">
+            <h3>Consumers (your direct clients)</h3>
+            {b.sources.consumers.length === 0 ? <p className="small muted" style={{ margin: 0 }}>No sign-ups yet.</p> : (
+              <table><thead><tr><th>Campaign</th><th>Signed up</th><th>Signed</th><th>Paid $37</th></tr></thead>
+                <tbody>{b.sources.consumers.map((g) => <tr key={g.label}><td className="small">{g.label}</td><td>{g.signedUp}</td><td>{g.signed}</td><td>{g.paid}</td></tr>)}</tbody></table>
+            )}
+          </div>
+          <div className="card tablewrap">
+            <h3>Operators</h3>
+            {b.sources.operators.length === 0 ? <p className="small muted" style={{ margin: 0 }}>No operators yet.</p> : (
+              <table><thead><tr><th>Campaign</th><th>Signed up</th><th>Paying</th></tr></thead>
+                <tbody>{b.sources.operators.map((g) => <tr key={g.label}><td className="small">{g.label}</td><td>{g.signedUp}</td><td>{g.paid}</td></tr>)}</tbody></table>
+            )}
+          </div>
+        </div>
+        <p className="fine" style={{ marginTop: 8 }}>Credited to the last tagged link a person clicked within 30 days before signing up. Tag ad links with utm_source, utm_campaign and utm_content.</p>
+
         <h2 style={{ marginTop: 24 }}>Funding requests ({b.funding.requests.length})</h2>
         <div className="card tablewrap">
           {b.funding.requests.length === 0 ? <span className="muted">No open requests. Clients appear here when their score unlocks funding and they ask for a review.</span> : (

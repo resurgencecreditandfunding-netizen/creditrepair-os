@@ -41,7 +41,7 @@ export const brandOf = (client: Row): Brand => {
 
 export interface NewClient {
   tenant: string; name: string; email: string; phone: string; address: string; city: string; state: string;
-  zip: string; dob: string; ssnLast4: string; businessStage: string; fundingGoal: string; smsOptIn?: boolean;
+  zip: string; dob: string; ssnLast4: string; businessStage: string; fundingGoal: string; smsOptIn?: boolean; source?: string | null;
 }
 export function createClient(c: NewClient) {
   const id = randomUUID();
@@ -49,6 +49,7 @@ export function createClient(c: NewClient) {
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, getTenant(c.tenant).id, c.name, c.email, c.phone, c.address, c.city,
     c.state, c.zip, c.dob, c.ssnLast4, c.businessStage, c.fundingGoal, now());
   if (c.smsOptIn && c.phone) db().prepare("UPDATE clients SET sms_opt_in_at = ? WHERE id = ?").run(now(), id);
+  if (c.source) db().prepare("UPDATE clients SET source = ? WHERE id = ?").run(c.source, id);
   log(id, "consumer", "account_created", { businessStage: c.businessStage, textOptIn: !!(c.smsOptIn && c.phone) });
   return id;
 }

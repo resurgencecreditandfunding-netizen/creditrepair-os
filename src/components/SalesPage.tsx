@@ -100,6 +100,7 @@ export function SalesPage({ price, legalName, address }: { price: string | null;
           <nav className="sp-row" style={{ gap: 18 }}>
             <a href="#how" className="sp-link">How it works</a>
             <a href="#pricing" className="sp-link">Pricing</a>
+            <Link href="/partners" className="sp-link">For professionals</Link>
             <Link href="/login" className="sp-link">Sign in</Link>
             <Link href="/start" className="btn accent">Get started</Link>
           </nav>
@@ -243,7 +244,7 @@ export function SalesPage({ price, legalName, address }: { price: string | null;
       <footer className="sp-foot">
         <div className="sp-in">
           <p>{price ? `Free to start. Your dispute letters cost ${price}, paid once when they are complete, with every later round included.` : "The credit service is free."} We may also be paid by lenders if you later choose funding through us, and you never have to. We dispute only information that is inaccurate, incomplete or unverifiable; accurate information cannot be removed. No result, score change or loan approval is guaranteed. You can dispute errors with the credit bureaus yourself at no cost.</p>
-          <p>{PRODUCT} · {TAGLINE} · {legalName} · {address} · <Link href="/login">Sign in</Link> · <Link href="/console/login">Staff sign-in</Link></p>
+          <p>{PRODUCT} · {TAGLINE} · {legalName} · {address} · <Link href="/login">Sign in</Link> · <Link href="/partners">For professionals</Link> · <Link href="/console/login">Staff sign-in</Link></p>
         </div>
       </footer>
     </div>

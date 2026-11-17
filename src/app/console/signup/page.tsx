@@ -32,7 +32,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
             <button className="btn accent big" type="submit">Continue to payment</button>
           </form>
         )}
-        <p className="small muted">Already have a login? <Link href="/console/login">Sign in</Link></p>
+        <p className="small muted">Already have a login? <Link href="/console/login">Sign in</Link> · <Link href="/partners">See how Leverage IQ works</Link></p>
       </main>
     </>
   );

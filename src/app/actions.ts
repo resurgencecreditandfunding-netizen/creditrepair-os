@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { SOURCE_COOKIE } from "@/lib/attribution";
 import { parseReportFile, rewordLetter } from "@/lib/ai";
 import { sampleReport, simulateRefresh } from "@/lib/sample";
 import { currentClient, endSession, requestMeta, requireClient, startSession } from "@/lib/session";
@@ -24,7 +26,7 @@ export async function startOnboarding(f: FormData) {
   const id = store.createClient({
     tenant: s(f, "tenant") || "default", name: s(f, "name"), email: s(f, "email"), phone: s(f, "phone"),
     address: s(f, "address"), city: s(f, "city"), state: s(f, "state").toUpperCase(), zip: s(f, "zip"),
-    dob: s(f, "dob"), ssnLast4: s(f, "ssnLast4"), businessStage: s(f, "businessStage"), fundingGoal: s(f, "fundingGoal"), smsOptIn: f.get("smsOptIn") === "on",
+    dob: s(f, "dob"), ssnLast4: s(f, "ssnLast4"), businessStage: s(f, "businessStage"), fundingGoal: s(f, "fundingGoal"), smsOptIn: f.get("smsOptIn") === "on", source: (await cookies()).get(SOURCE_COOKIE)?.value ?? null,
   });
   if (s(f, "invite")) (await import("@/lib/invites")).markJoined(s(f, "invite"), id);
   await startSession(id);

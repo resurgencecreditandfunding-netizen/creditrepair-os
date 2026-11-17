@@ -4,11 +4,25 @@ import { addDays, today } from "./dates";
 import { db } from "./db";
 import { hashPassword } from "./password";
 import { log } from "./store";
+import { parseSource, sourceLabel } from "./attribution";
 
 type Row = Record<string, any>;
 const owner = (op: Operator) => { if (!isPlatform(op)) throw new Error("Only the platform owner can do this."); };
 const n = (sql: string, ...args: any[]) => (db().prepare(sql).get(...args) as Row).n as number;
 const who = (op: Operator) => `owner:${op.email}`;
+
+/** Totals per campaign, most sign-ups first. */
+function group(rows: Row[], count: (r: Row) => { signedUp: number; signed: number; paid: number }) {
+  const m = new Map<string, { label: string; signedUp: number; signed: number; paid: number }>();
+  for (const r of rows) {
+    const label = sourceLabel(parseSource(r.source));
+    const g = m.get(label) ?? { label, signedUp: 0, signed: 0, paid: 0 };
+    const c = count(r); g.signedUp += c.signedUp; g.signed += c.signed; g.paid += c.paid;
+    m.set(label, g);
+  }
+  const untagged = (g: { label: string }) => (g.label === "No campaign tag" ? 1 : 0);
+  return [...m.values()].sort((a, b) => untagged(a) - untagged(b) || b.signedUp - a.signedUp || b.paid - a.paid || a.label.localeCompare(b.label));
+}
 
 /** Everything on the owner's business page, computed from the live database. */
 export function businessOverview(op: Operator) {
@@ -74,6 +88,10 @@ export function businessOverview(op: Operator) {
       requests: clients.filter((c) => c.fundingRequested),
     },
     operators, partners,
+    sources: {
+      consumers: group(d.prepare("SELECT source, signed_at, paid_at FROM clients WHERE tenant_id = 'tenant_default'").all() as Row[], (r) => ({ signedUp: 1, signed: r.signed_at ? 1 : 0, paid: r.paid_at ? 1 : 0 })),
+      operators: group(tenants.map((t) => t as Row), (r) => ({ signedUp: 1, signed: 0, paid: !r.suspended && ["active", "trialing", "past_due"].includes(r.sub_status) ? 1 : 0 })),
+    },
     activity: d.prepare(`SELECT a.at, a.actor, a.action, a.detail, c.name client, c.id client_id, t.name company FROM audit_log a
       LEFT JOIN clients c ON c.id = a.client_id LEFT JOIN tenants t ON t.id = c.tenant_id ORDER BY a.seq DESC LIMIT 25`).all() as Row[],
   };
