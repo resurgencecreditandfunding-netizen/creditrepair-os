@@ -86,3 +86,16 @@ describe("events", () => {
     expect(ev.lastError).toMatch(/^400/);
   });
 });
+
+describe("opting out", () => {
+  it("stops events for every account with that email, keeping nothing else from changing", async () => {
+    on(); stub();
+    const id = store.createClient(person("default", "Olive Out"));
+    meta.saveMatch("clients", id, { fbp: "fb.1.1.2", ip: "203.0.113.9" });
+    meta.optOutByEmail("  OLIVE@example.com ");
+    expect(await meta.consumerEvent(id, "Lead")).toBe(false);
+    expect(calls).toHaveLength(0);
+    expect(store.getLog(id).some((e) => e.action === "ad_tracking_opt_out")).toBe(true);
+    meta.optOutByEmail("nobody@example.com"); // no error, no hint
+  });
+});

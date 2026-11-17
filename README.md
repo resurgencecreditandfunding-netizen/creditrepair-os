@@ -76,6 +76,10 @@ Set `META_PIXEL_ID` and `META_CAPI_TOKEN` (optional `META_TEST_EVENT_CODE` while
 - **Never sent:** report contents, findings, letters, scores, an operator's clients, or anyone whose browser sends Global Privacy Control.
 - The Business page shows events sent and failed in the last 7 days, with Meta's last error.
 
+## Privacy and terms
+
+`/privacy`, `/terms` and `/privacy/choices` are linked from every public page and both sign-up forms, which also state that continuing means agreeing to the terms. The privacy policy names each service provider (Render, Resend, Twilio, Stripe, Anthropic), explains the Meta Pixel and Conversions API, and includes the text-message wording carriers require. `/privacy/choices` opts a browser (cookie) or an account (by email) out of Meta events; Global Privacy Control is honored automatically. `CONTACT_EMAIL` sets the address shown. These are drafts for attorney review.
+
 ## How letters are built
 
 - Round 1 is always a bureau reinvestigation request under § 611. Identity theft items instead get their own § 605B block request (4 business days), in a separate letter.

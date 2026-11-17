@@ -134,3 +134,18 @@ export function recentEvents() {
   }
   return { byEvent: [...out.entries()].map(([event, g]) => ({ event, ...g })), lastError };
 }
+
+/** Stops events for a person from now on, keeping any other match details. */
+export function optOut(table: "clients" | "tenants", id: string) {
+  const row = db().prepare(`SELECT ad_match FROM ${table} WHERE id = ?`).get(id) as Row | undefined;
+  if (!row) return;
+  saveMatch(table, id, { ...readMatch(row.ad_match), gpc: true });
+  log(table === "clients" ? id : null, "consumer", "ad_tracking_opt_out");
+}
+/** Opts out every direct client with this email. Says nothing about whether one exists. */
+export function optOutByEmail(email: string) {
+  const rows = db().prepare("SELECT id FROM clients WHERE lower(trim(email)) = ?").all(email.trim().toLowerCase()) as Row[];
+  for (const r of rows) optOut("clients", r.id);
+  const ops = db().prepare("SELECT tenant_id FROM operators WHERE lower(trim(email)) = ?").all(email.trim().toLowerCase()) as Row[];
+  for (const o of ops) optOut("tenants", o.tenant_id);
+}

@@ -1,5 +1,6 @@
 import Script from "next/script";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { OPTOUT_COOKIE } from "@/lib/meta-request";
 import { pixelId } from "@/lib/meta";
 
 /**
@@ -10,7 +11,7 @@ import { pixelId } from "@/lib/meta";
  */
 export async function MetaPixel({ audience }: { audience: "consumer" | "operator" }) {
   const id = pixelId();
-  if (!id || !/^\d{5,20}$/.test(id) || (await headers()).get("sec-gpc") === "1") return null;
+  if (!id || !/^\d{5,20}$/.test(id) || (await headers()).get("sec-gpc") === "1" || (await cookies()).get(OPTOUT_COOKIE)?.value === "1") return null;
   const code = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq.disablePushState=true;fbq('set','autoConfig',false,'${id}');fbq('init','${id}');fbq('track','PageView');fbq('track','ViewContent',{content_category:'${audience}'});`;
   return <Script id="meta-pixel" strategy="afterInteractive">{code}</Script>;

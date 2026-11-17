@@ -6,6 +6,7 @@ import { currentClient } from "@/lib/session";
 import { brandBar, tenantForVisit } from "@/lib/branding";
 import { getInvite, markOpened } from "@/lib/invites";
 import { MetaPixel } from "@/components/MetaPixel";
+import { LegalLinks } from "@/components/LegalLinks";
 import { getTenant } from "@/lib/store";
 
 export default async function Start({ searchParams }: { searchParams: Promise<{ t?: string; i?: string; error?: string }> }) {
@@ -65,10 +66,11 @@ export default async function Start({ searchParams }: { searchParams: Promise<{ 
           </div>
           <label className="check"><input type="checkbox" name="smsOptIn" />
             <span className="small">Text me reminders about my case, such as letters to approve and response deadlines. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Not required to use the service.</span></label>
+          <p className="small muted" style={{ margin: "4px 0 14px" }}>By continuing, you agree to our <Link href="/terms">Terms of use</Link> and acknowledge our <Link href="/privacy">Privacy policy</Link>.</p>
           <button className="btn accent big" type="submit">Continue</button>
           <p className="fine" style={{ marginTop: 14, marginBottom: 0 }}>We store only the last 4 digits of your Social Security number.</p>
         </form>
-        <p className="small muted">Already signed up? <Link href="/login">Sign in</Link></p>
+        <p className="small muted">Already signed up? <Link href="/login">Sign in</Link> · <LegalLinks dark={false} /></p>
       </main>
     </>
   );

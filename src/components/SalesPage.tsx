@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PRODUCT, TAGLINE } from "@/lib/brand";
+import { LegalLinks } from "./LegalLinks";
 
 /**
  * The platform's own sales page for direct clients.
@@ -244,7 +245,7 @@ export function SalesPage({ price, legalName, address }: { price: string | null;
       <footer className="sp-foot">
         <div className="sp-in">
           <p>{price ? `Free to start. Your dispute letters cost ${price}, paid once when they are complete, with every later round included.` : "The credit service is free."} We may also be paid by lenders if you later choose funding through us, and you never have to. We dispute only information that is inaccurate, incomplete or unverifiable; accurate information cannot be removed. No result, score change or loan approval is guaranteed. You can dispute errors with the credit bureaus yourself at no cost.</p>
-          <p>{PRODUCT} · {TAGLINE} · {legalName} · {address} · <Link href="/login">Sign in</Link> · <Link href="/partners">For professionals</Link> · <Link href="/console/login">Staff sign-in</Link></p>
+          <p>{PRODUCT} · {TAGLINE} · {legalName} · {address} · <Link href="/login">Sign in</Link> · <Link href="/partners">For professionals</Link> · <Link href="/console/login">Staff sign-in</Link> · <LegalLinks /></p>
         </div>
       </footer>
     </div>

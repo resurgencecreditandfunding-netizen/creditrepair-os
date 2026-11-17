@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PRODUCT } from "@/lib/brand";
+import { LegalLinks } from "./LegalLinks";
 
 /**
  * The sales page for operators: tax professionals, credit repair firms and funding brokers.
@@ -234,7 +235,7 @@ export function PartnersPage({ legalName, address }: { legalName: string; addres
       <footer className="sp-foot">
         <div className="sp-in">
           <p>Leverage IQ provides software and compliance tools; it does not provide legal advice. You are responsible for following the federal and state laws that apply to your business, including the Credit Repair Organizations Act. No client result, score change or funding approval is guaranteed. Revenue share applies only to deals funded through the Leverage IQ funding program, under the terms of your agreement.</p>
-          <p>{PRODUCT} · {legalName} · {address} · <Link href="/console/login">Sign in</Link> · <Link href="/">For individuals</Link></p>
+          <p>{PRODUCT} · {legalName} · {address} · <Link href="/console/login">Sign in</Link> · <Link href="/">For individuals</Link> · <LegalLinks /></p>
         </div>
       </footer>
     </div>

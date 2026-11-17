@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requestSignIn } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
+import { LegalLinks } from "@/components/LegalLinks";
 import { brandBar, tenantForVisit } from "@/lib/branding";
 import { currentClient } from "@/lib/session";
 import { signInAvailable } from "@/lib/signin";
@@ -25,6 +26,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
           </form>
         ) : <div className="notice">Sign-in links are not switched on yet. Please contact the company that invited you.</div>}
         <p className="small muted">New here? <Link href="/start">Create a free account</Link>. Staff? <Link href="/console/login">Staff sign-in</Link>.</p>
+        <p className="small muted"><LegalLinks dark={false} /></p>
       </main>
     </>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MetaPixel } from "@/components/MetaPixel";
+import { LegalLinks } from "@/components/LegalLinks";
 import { registerCompany } from "@/app/console/actions";
 import { Flash, ConsoleBrand } from "@/components/ui";
 import { billingConfigured, PLAN_LABEL } from "@/lib/billing";
@@ -31,10 +32,11 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
             <div className="field"><label htmlFor="email">Work email</label><input id="email" name="email" type="email" required autoComplete="username" /></div>
             <div className="field"><label htmlFor="password">Password (10 or more characters)</label><input id="password" name="password" type="password" minLength={10} required autoComplete="new-password" /></div>
             <label className="check"><input type="checkbox" name="terms" required /><span>My company will follow the laws that apply to it, including the Credit Repair Organizations Act and my state's rules. We will not charge a client before services are fully performed, and we will dispute only information the client believes is inaccurate.</span></label>
+            <p className="small muted" style={{ margin: "4px 0 14px" }}>By continuing, you agree to our <Link href="/terms">Terms of use</Link>, including the operator terms in section 5, and acknowledge our <Link href="/privacy">Privacy policy</Link>.</p>
             <button className="btn accent big" type="submit">Continue to payment</button>
           </form>
         )}
-        <p className="small muted">Already have a login? <Link href="/console/login">Sign in</Link> · <Link href="/partners">See how Leverage IQ works</Link></p>
+        <p className="small muted">Already have a login? <Link href="/console/login">Sign in</Link> · <Link href="/partners">See how Leverage IQ works</Link> · <LegalLinks dark={false} /></p>
       </main>
     </>
   );

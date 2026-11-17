@@ -246,3 +246,18 @@ export async function unlockLetters() {
   void import("@/lib/meta").then((m) => m.consumerEvent(c.id, "InitiateCheckout", c.price_cents / 100));
   redirect(url);
 }
+
+// ---------- privacy choices ----------
+export async function optOutBrowser() {
+  const { OPTOUT_COOKIE } = await import("@/lib/meta-request");
+  (await cookies()).set(OPTOUT_COOKIE, "1", { path: "/", maxAge: 365 * 86400, sameSite: "lax", httpOnly: true, secure: process.env.NODE_ENV === "production" });
+  const c = await currentClient();
+  if (c) (await import("@/lib/meta")).optOut("clients", c.id);
+  back("/privacy/choices", "ok", "Done. This browser is opted out.");
+}
+export async function optOutEmail(f: FormData) {
+  const email = s(f, "email");
+  if (!email.includes("@")) back("/privacy/choices", "error", "Enter a valid email address.");
+  (await import("@/lib/meta")).optOutByEmail(email);
+  back("/privacy/choices", "ok", "Done. If that email is on an account, we will no longer send events about it to Meta.");
+}
