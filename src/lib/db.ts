@@ -78,6 +78,11 @@ CREATE TABLE IF NOT EXISTS funding_deals (
   lender TEXT, product TEXT, funded_amount REAL, commission REAL, share_pct REAL, share_amount REAL, share_paid_at TEXT,
   notes TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS invites (
+  id TEXT PRIMARY KEY, tenant_id TEXT NOT NULL, name TEXT, email TEXT NOT NULL, phone TEXT, token TEXT UNIQUE NOT NULL,
+  status TEXT NOT NULL, error TEXT, sent_at TEXT, opened_at TEXT, client_id TEXT, created_by TEXT, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS email_optouts (email TEXT PRIMARY KEY, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL

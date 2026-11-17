@@ -260,3 +260,25 @@ export async function saveBranding(f: FormData) {
   catch (e) { back("/console/settings", "error", message(e)); }
   back("/console/settings", "ok", "Branding saved. Your clients see it on their next page load.");
 }
+
+// ---------- invites ----------
+export async function uploadInvites(f: FormData) {
+  const op = await requireOperator();
+  const inv = await import("@/lib/invites");
+  const file = f.get("file");
+  const text = [s(f, "list"), file instanceof File && file.size ? await file.text() : ""].join("\n");
+  const { rows, bad } = inv.parseList(text);
+  if (!rows.length) back("/console/invites", "error", bad.length ? `No email addresses found. Check lines like: ${bad[0]}` : "Paste a list or choose a CSV file first.");
+  let made: ReturnType<typeof inv.createInvites>;
+  try { made = inv.createInvites(op.tenant_id, rows, op.email); } catch (e) { return back("/console/invites", "error", message(e)); }
+  void inv.sendInvites(made.ids);
+  const sk = made.skipped, notes = [sk.duplicate && `${sk.duplicate} already invited`, sk.alreadyClient && `${sk.alreadyClient} already clients`, sk.optedOut && `${sk.optedOut} opted out`, bad.length && `${bad.length} lines without an email`].filter(Boolean);
+  back("/console/invites", "ok", `${made.created} invite${made.created === 1 ? "" : "s"} created${(await import("@/lib/notify")).emailConfigured() ? " and sending now" : " (email is not switched on, so copy each link below)"}.${notes.length ? ` Skipped: ${notes.join(", ")}.` : ""}`);
+}
+export async function resendInvites() {
+  const op = await requireOperator();
+  const inv = await import("@/lib/invites");
+  const ids = inv.invitesFor(op.tenant_id).rows.filter((r) => r.status === "pending" || r.status === "failed").map((r) => r.id);
+  void inv.sendInvites(ids);
+  back("/console/invites", "ok", `Sending ${ids.length} invite${ids.length === 1 ? "" : "s"}.`);
+}

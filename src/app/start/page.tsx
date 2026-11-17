@@ -4,11 +4,15 @@ import { startOnboarding } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
 import { currentClient } from "@/lib/session";
 import { brandBar, tenantForVisit } from "@/lib/branding";
+import { getInvite, markOpened } from "@/lib/invites";
+import { getTenant } from "@/lib/store";
 
-export default async function Start({ searchParams }: { searchParams: Promise<{ t?: string; error?: string }> }) {
-  const { t, error } = await searchParams;
+export default async function Start({ searchParams }: { searchParams: Promise<{ t?: string; i?: string; error?: string }> }) {
+  const { t, i, error } = await searchParams;
+  const invite = i ? getInvite(i) : undefined;
+  if (invite) markOpened(invite.token);
   if (await currentClient()) redirect("/dashboard");
-  const tenant = await tenantForVisit(t);
+  const tenant = invite ? getTenant(invite.tenant_id) : await tenantForVisit(t);
   const F = ({ name, label, type = "text", ...rest }: { name: string; label: string; type?: string } & React.InputHTMLAttributes<HTMLInputElement>) => (
     <div className="field"><label htmlFor={name}>{label}</label><input id={name} name={name} type={type} required {...rest} /></div>
   );
@@ -22,10 +26,11 @@ export default async function Start({ searchParams }: { searchParams: Promise<{ 
         <Flash error={error} />
         <form action={startOnboarding} className="card">
           <input type="hidden" name="tenant" value={tenant.slug} />
-          <F name="name" label="Full legal name" autoComplete="name" />
+          {invite && <input type="hidden" name="invite" value={invite.token} />}
+          <F name="name" label="Full legal name" autoComplete="name" defaultValue={invite?.name ?? ""} />
           <div className="grid g2">
-            <F name="email" label="Email" type="email" autoComplete="email" />
-            <F name="phone" label="Mobile phone (optional)" type="tel" required={false} autoComplete="tel" />
+            <F name="email" label="Email" type="email" autoComplete="email" defaultValue={invite?.email ?? ""} />
+            <F name="phone" label="Mobile phone (optional)" type="tel" required={false} autoComplete="tel" defaultValue={invite?.phone ?? ""} />
           </div>
           <F name="address" label="Street address" autoComplete="street-address" />
           <div className="grid g3">

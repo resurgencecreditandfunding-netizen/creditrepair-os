@@ -26,6 +26,7 @@ export async function startOnboarding(f: FormData) {
     address: s(f, "address"), city: s(f, "city"), state: s(f, "state").toUpperCase(), zip: s(f, "zip"),
     dob: s(f, "dob"), ssnLast4: s(f, "ssnLast4"), businessStage: s(f, "businessStage"), fundingGoal: s(f, "fundingGoal"), smsOptIn: f.get("smsOptIn") === "on",
   });
+  if (s(f, "invite")) (await import("@/lib/invites")).markJoined(s(f, "invite"), id);
   await startSession(id);
   redirect("/start/disclosure");
 }
@@ -217,4 +218,9 @@ export async function confirmReply(f: FormData) {
   let n = 0;
   try { n = confirmSuggestions(c.id, id, filesFor(c.id, id), "consumer"); } catch (e) { back(`/disputes/${id}`, "error", message(e)); }
   back(`/disputes/${id}`, "ok", `${n} result${n === 1 ? "" : "s"} recorded.`);
+}
+
+export async function unsubscribe(f: FormData) {
+  const ok = (await import("@/lib/invites")).optOut(s(f, "i"));
+  redirect(`/unsubscribe?done=${ok ? 1 : 0}`);
 }
