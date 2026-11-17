@@ -16,7 +16,10 @@ const API = () => process.env.STRIPE_API_BASE ?? "https://api.stripe.com";
 
 /** past_due keeps access while Stripe retries the card; Stripe moves it to canceled or unpaid if retries fail. */
 const OK = new Set(["exempt", "active", "trialing", "past_due"]);
-export const goodStanding = (tenant: Row) => OK.has(tenant.sub_status ?? "exempt");
+/** A company the platform owner has suspended is locked out whatever its payment status. */
+export const goodStanding = (tenant: Row) => !tenant.suspended && OK.has(tenant.sub_status ?? "exempt");
+/** What one paying operator is worth per month, for the revenue estimate. */
+export const PLAN_MONTHLY = Number(process.env.PLAN_MONTHLY ?? 147);
 
 async function stripe(path: string, params: Record<string, string>): Promise<Row> {
   const res = await fetch(`${API()}/v1/${path}`, {

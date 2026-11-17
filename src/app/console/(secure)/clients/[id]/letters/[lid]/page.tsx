@@ -22,7 +22,7 @@ export default async function OpLetter({ params, searchParams }: { params: Promi
 
   return (
     <>
-      <ConsoleBar name={op.name} signOut={signOutOperator} />
+      <ConsoleBar owner={op.role === "platform"} name={op.name} signOut={signOutOperator} />
       <main className="wrap" style={{ maxWidth: 860 }}>
         <div className="noprint">
           <Link href={`/console/clients/${id}`} className="small muted">← {c.name}</Link>

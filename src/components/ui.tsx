@@ -30,8 +30,10 @@ export function Flash({ error, ok }: { error?: string; ok?: string }) {
   return <div className={`notice ${error ? "" : "gray"}`} role="status">{error ?? ok}</div>;
 }
 
-export function ConsoleBar({ active, name, signOut }: { active?: string; name: string; signOut: () => Promise<void> }) {
-  const items = [["", "Clients"], ["settings", "Companies and logins"], ["billing", "Billing"]];
+export function ConsoleBar({ active, name, signOut, owner }: { active?: string; name: string; signOut: () => Promise<void>; owner?: boolean }) {
+  const items = owner
+    ? [["admin", "Business"], ["", "Clients"], ["settings", "Companies and logins"]]
+    : [["", "Clients"], ["settings", "Companies and logins"], ["billing", "Billing"]];
   return (
     <header className="topbar">
       <div className="topbar-in">

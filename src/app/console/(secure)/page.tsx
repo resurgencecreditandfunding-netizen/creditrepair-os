@@ -26,7 +26,7 @@ export default async function Console({ searchParams }: { searchParams: Promise<
 
   return (
     <>
-      <ConsoleBar active="" name={op.name} signOut={signOutOperator} />
+      <ConsoleBar active="" owner={op.role === "platform"} name={op.name} signOut={signOutOperator} />
       <main className="wrap" style={{ maxWidth: 1240 }}>
         <h1>{ops.isPlatform(op) ? "All clients" : getTenant(op.tenant_id).name}</h1>
         <p className="muted">What needs doing today, then every client.</p>

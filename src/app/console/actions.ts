@@ -27,7 +27,7 @@ export async function signIn(f: FormData) {
   }
   attempts.delete(email);
   await startOpSession(op.id);
-  redirect("/console");
+  redirect(op.role === "platform" ? "/console/admin" : "/console");
 }
 export async function signOutOperator() { await endOpSession(); redirect("/console/login"); }
 
@@ -144,4 +144,28 @@ export async function manageBilling() {
   let url = "";
   try { url = await billing.createPortal(store.getTenant(op.tenant_id), await origin()); } catch (e) { back("/console/billing", "error", message(e)); }
   redirect(url);
+}
+
+// ---------- owner controls ----------
+async function adminAction(path: string, okMsg: string, run: (op: ops.Operator, admin: typeof import("@/lib/admin")) => void) {
+  const op = await requireOperator();
+  try { run(op, await import("@/lib/admin")); } catch (e) { back(path, "error", message(e)); }
+  back(path, "ok", okMsg);
+}
+export async function suspendCompany(f: FormData) {
+  const on = s(f, "to") === "1";
+  await adminAction("/console/admin", on ? "Company suspended. Its staff are locked out and it cannot take new clients." : "Company reinstated.", (op, a) => a.setSuspended(op, s(f, "id"), on));
+}
+export async function compCompany(f: FormData) {
+  const on = s(f, "to") === "1";
+  await adminAction("/console/admin", on ? "Company now has free access." : "Company now needs a subscription.", (op, a) => a.setComped(op, s(f, "id"), on));
+}
+export async function editCompany(f: FormData) {
+  await adminAction("/console/admin", "Company details saved. New client contracts will use them.", (op, a) => a.updateCompany(op, s(f, "id"), { name: s(f, "name"), legalName: s(f, "legalName"), address: s(f, "address") }));
+}
+export async function resetLoginPassword(f: FormData) {
+  await adminAction("/console/settings", "Password changed. Give the new password to that person.", (op, a) => a.resetPassword(op, s(f, "id"), s(f, "password")));
+}
+export async function removeLogin(f: FormData) {
+  await adminAction("/console/settings", "Login removed.", (op, a) => a.removeLogin(op, s(f, "id")));
 }

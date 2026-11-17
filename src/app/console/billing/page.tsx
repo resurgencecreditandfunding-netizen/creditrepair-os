@@ -26,7 +26,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
   const needsCheckout = ["pending", "canceled"].includes(t.sub_status);
   return (
     <>
-      {ok ? <ConsoleBar active="billing" name={op.name} signOut={signOutOperator} /> : (
+      {ok ? <ConsoleBar active="billing" owner={op.role === "platform"} name={op.name} signOut={signOutOperator} /> : (
         <header className="topbar"><div className="topbar-in"><span style={{ flex: 1 }}><ConsoleBrand /></span>
           <form action={signOutOperator}><button className="btn link" type="submit" style={{ color: "#fff" }}>Sign out</button></form></div></header>
       )}

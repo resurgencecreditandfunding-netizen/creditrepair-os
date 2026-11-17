@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { addMonitoringService, addOperator, addTenant, removeMonitoringService, signOutOperator } from "@/app/console/actions";
+import { addMonitoringService, addOperator, addTenant, removeLogin, removeMonitoringService, resetLoginPassword, signOutOperator } from "@/app/console/actions";
 import { ConsoleBar, Flash } from "@/components/ui";
 import * as ops from "@/lib/console";
 import { requireOperator } from "@/lib/opsession";
@@ -16,7 +16,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   return (
     <>
-      <ConsoleBar active="settings" name={op.name} signOut={signOutOperator} />
+      <ConsoleBar active="settings" owner={op.role === "platform"} name={op.name} signOut={signOutOperator} />
       <main className="wrap">
         <h1>Companies and logins</h1>
         <p className="muted">Each company has its own clients, its own name on the contract, and its own sign-up link.</p>
@@ -30,7 +30,27 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             <p><code>{origin}/?t={t.slug}</code></p>
             <div className="label">Staff logins</div>
             {t.operators.length === 0 ? <p className="small muted">None yet.</p> : (
-              <table><tbody>{t.operators.map((o: any) => <tr key={o.id}><td>{o.name}</td><td className="small">{o.email}</td><td><span className="pill">{o.role}</span></td></tr>)}</tbody></table>
+              <table><tbody>{t.operators.map((o: any) => (
+                <tr key={o.id}>
+                  <td>{o.name}<div className="small muted">{o.email}</div></td>
+                  <td><span className="pill">{o.role === "platform" ? "owner" : o.role}</span></td>
+                  <td>
+                    {ops.canManage(op) && (ops.isPlatform(op) || o.role !== "platform") && (
+                      <details>
+                        <summary className="small">Manage</summary>
+                        <form action={resetLoginPassword} className="row" style={{ marginTop: 8 }}>
+                          <input type="hidden" name="id" value={o.id} />
+                          <input type="text" name="password" minLength={10} required placeholder="New password (10+ characters)" aria-label={`New password for ${o.email}`} autoComplete="off" style={{ width: 240 }} />
+                          <button className="btn" type="submit">Set password</button>
+                        </form>
+                        {o.id !== op.id && o.role !== "platform" && (
+                          <form action={removeLogin} style={{ marginTop: 8 }}><input type="hidden" name="id" value={o.id} /><button className="btn link" type="submit">Remove this login</button></form>
+                        )}
+                      </details>
+                    )}
+                  </td>
+                </tr>
+              ))}</tbody></table>
             )}
           </div>
         ))}

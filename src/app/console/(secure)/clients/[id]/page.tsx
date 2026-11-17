@@ -36,7 +36,7 @@ export default async function Client({ params, searchParams }: { params: Promise
 
   return (
     <>
-      <ConsoleBar name={op.name} signOut={signOutOperator} />
+      <ConsoleBar owner={op.role === "platform"} name={op.name} signOut={signOutOperator} />
       <main className="wrap" style={{ maxWidth: 1240 }}>
         <Link href="/console" className="small muted">← All clients</Link>
         <div className="row between" style={{ marginTop: 8 }}>

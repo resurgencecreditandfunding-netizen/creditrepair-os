@@ -50,7 +50,7 @@ export function createTenant(op: Operator, t: { name: string; slug: string; lega
   if (!slug || !t.name || !t.legalName || !t.address) throw new Error("Name, link name, legal name and address are all required.");
   if (db().prepare("SELECT 1 FROM tenants WHERE slug = ?").get(slug)) throw new Error("That link name is taken.");
   const id = randomUUID();
-  db().prepare("INSERT INTO tenants (id, slug, name, address, kind, legal_name) VALUES (?,?,?,?,?,?)").run(id, slug, t.name, t.address, t.kind, t.legalName);
+  db().prepare("INSERT INTO tenants (id, slug, name, address, kind, legal_name, created_at) VALUES (?,?,?,?,?,?,?)").run(id, slug, t.name, t.address, t.kind, t.legalName, new Date().toISOString());
   return id;
 }
 
@@ -163,8 +163,8 @@ export function registerCompany(r: Registration) {
   for (let n = 2; d.prepare("SELECT 1 FROM tenants WHERE slug = ?").get(slug); n++) slug = `${base}-${n}`;
   const tenantId = randomUUID();
   const kind = r.kind === "tax_pro" || r.kind === "funding_pro" ? r.kind : "credit_repair";
-  d.prepare("INSERT INTO tenants (id, slug, name, address, kind, legal_name, sub_status) VALUES (?,?,?,?,?,?,'pending')")
-    .run(tenantId, slug, r.company.trim(), r.address.trim(), kind, r.legalName.trim());
+  d.prepare("INSERT INTO tenants (id, slug, name, address, kind, legal_name, sub_status, created_at) VALUES (?,?,?,?,?,?,'pending',?)")
+    .run(tenantId, slug, r.company.trim(), r.address.trim(), kind, r.legalName.trim(), new Date().toISOString());
   const operatorId = createOperator({ tenantId, email, name: r.name.trim(), password: r.password, role: "admin" });
   return { tenantId, operatorId };
 }

@@ -54,6 +54,10 @@ npm test
 - Staff can upload reports, draft letters, record mailing and results, and add internal notes. Staff can never approve a letter for a client.
 - Each company's clients sign a contract naming that company's legal name and address.
 
+## Owner's business page (`/console/admin`)
+
+Platform owner only, and where the owner lands after sign-in. Shows estimated monthly revenue, operators by payment status, clients and results across every company, open funding requests, credit monitoring link clicks, and latest activity. The owner can suspend or reinstate a company, give free access, and edit a company's contract details. Owners and company admins can reset a staff password or remove a login under Companies and logins.
+
 ## Operator subscription
 
 Companies sign up at `/console/signup`, pay through Stripe Checkout, and get console access when Stripe confirms payment. Access continues while a late payment is retried and closes on cancellation; their existing clients keep their own accounts. Companies the platform owner adds by hand are not charged.
@@ -68,6 +72,6 @@ Credit monitoring partners are the platform owner's affiliate links, managed und
 
 - Per-company fee terms in the client contract (every contract currently says $0).
 - Client login. A signed cookie identifies the device; add email or SMS login before real customers.
-- Staff password reset and two-step sign-in. New logins get a temporary password set by an admin.
+- Self-service "forgot password" and two-step sign-in for staff. An admin resets passwords by hand.
 - Lender matching (Phase 2).
 - State eligibility rules, and attorney review of every document and citation.
