@@ -15,6 +15,10 @@ Open http://localhost:3000 for the client side and http://localhost:3000/console
 npm test
 ```
 
+## Deploy (Render)
+
+`render.yaml` is a Render Blueprint: New > Blueprint > pick this repository. It creates the web service with a 1 GB disk for the database and asks for the secret values. Changes merged into `main` deploy automatically. Health check: `/api/health`.
+
 ## Settings (environment variables)
 
 | Variable | Purpose |
@@ -62,7 +66,6 @@ Credit monitoring partners are the platform owner's affiliate links, managed und
 
 ## Not built yet
 
-- Hosting. Nothing is deployed; Stripe needs a public address to send payment events to.
 - Per-company fee terms in the client contract (every contract currently says $0).
 - Client login. A signed cookie identifies the device; add email or SMS login before real customers.
 - Staff password reset and two-step sign-in. New logins get a temporary password set by an admin.

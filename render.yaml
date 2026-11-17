@@ -1,0 +1,46 @@
+# Render Blueprint for Leverage IQ.
+# In Render: New > Blueprint > pick this repository. Render reads this file and creates everything below.
+services:
+  - type: web
+    name: leverage-iq
+    runtime: node
+    plan: starter            # a paid plan is required: the free plan has no disk, so the database would be wiped on every restart
+    region: virginia
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true         # every change merged into main goes live automatically
+    domains:
+      - leverageiq100.com   # shows as unverified in Render until the DNS records are added at the registrar
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: DATABASE_PATH
+        value: /var/data/app.db
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: DEMO_MODE       # "1" adds a sample report and skips the 3-day wait. Must be "0" before real clients sign up.
+        value: "0"
+      - key: BRAND_NAME
+        value: Leverage IQ
+      - key: LEGAL_NAME
+        value: Resurgence Consulting Services Incorporated
+      - key: BRAND_ADDRESS
+        value: 220 Sheila Ave, Daytona Beach, FL 32114
+      - key: STRIPE_PRICE_ID
+        value: price_1UcMDZCtNJvojcHMs2do5Khq
+      # Render asks you to type these in when you create the Blueprint. They are never stored in the repository.
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: APP_URL          # leave blank at first; set to https://leverageiq100.com once the domain shows as verified
+        sync: false

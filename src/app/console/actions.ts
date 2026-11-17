@@ -113,7 +113,9 @@ export async function removeMonitoringService(f: FormData) {
 
 // ---------- company sign-up and subscription ----------
 async function origin() {
-  if (process.env.APP_URL) return process.env.APP_URL.replace(/\/$/, "");
+  // Your own domain if set, otherwise the address Render assigns.
+  const fixed = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL;
+  if (fixed) return fixed.replace(/\/$/, "");
   const h = await (await import("next/headers")).headers();
   return `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
 }

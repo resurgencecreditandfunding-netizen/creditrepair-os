@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS audit_log (
 function seedAdmin(d: DatabaseSync) {
   if (d.prepare("SELECT 1 FROM operators LIMIT 1").get()) return;
   const demo = process.env.DEMO_MODE === "1";
-  const email = process.env.ADMIN_EMAIL ?? (demo ? "admin@demo.local" : undefined);
-  const password = process.env.ADMIN_PASSWORD ?? (demo ? "demo-console" : undefined);
+  const email = process.env.ADMIN_EMAIL || (demo ? "admin@demo.local" : undefined);
+  const password = process.env.ADMIN_PASSWORD || (demo ? "demo-console" : undefined);
   if (!email || !password) return;
   d.prepare("INSERT INTO operators (id, tenant_id, email, name, password_hash, role, created_at) VALUES (?,?,?,?,?,?,?)")
     .run(randomUUID(), "tenant_default", email.toLowerCase(), "Platform admin", hashPassword(password), "platform", new Date().toISOString());
