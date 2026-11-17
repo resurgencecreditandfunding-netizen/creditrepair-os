@@ -1,0 +1,121 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>video</title>
+<style>
+  :root { --accent: #d04c1c; }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1080px; height: 1920px; overflow: hidden; background: #0b0b0c; font-family: Inter, sans-serif; color: #fff; -webkit-font-smoothing: antialiased; }
+  #stage { position: absolute; inset: 0; }
+  .glow { position: absolute; width: 1500px; height: 1300px; left: -210px; top: 700px; border-radius: 50%; background: radial-gradient(closest-side, rgba(208,76,28,.38), rgba(208,76,28,0)); }
+  .mark { position: absolute; left: 70px; top: 150px; height: 46px; }
+  .layer { position: absolute; inset: 0; opacity: 0; will-change: opacity, transform; }
+  .cap { position: absolute; left: 70px; right: 70px; top: 270px; }
+  .cap h2 { font-family: "Inter Display", Inter, sans-serif; font-weight: 800; font-size: 82px; line-height: 1.03; letter-spacing: -0.035em; }
+  .cap h2 em, .big em { font-style: normal; color: var(--accent); }
+  .cap p { margin-top: 20px; font-size: 36px; line-height: 1.3; color: #d4d4d8; font-weight: 500; }
+  .view { position: absolute; left: 60px; width: 960px; top: 720px; height: 820px; border-radius: 22px; overflow: hidden; background: #f4f4f5; border: 1px solid #2a2a2e; box-shadow: 0 50px 110px -40px rgba(0,0,0,.9); }
+  .view img { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .tag { position: absolute; right: 70px; top: 1556px; font-size: 22px; color: #71717a; }
+  .big { position: absolute; left: 70px; right: 70px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+  .big h1 { font-family: "Inter Display", Inter, sans-serif; font-weight: 800; font-size: 108px; line-height: 1.0; letter-spacing: -0.04em; }
+  .pains { list-style: none; padding: 0; margin-top: 60px; display: grid; gap: 34px; }
+  .pains li { font-size: 54px; font-weight: 700; letter-spacing: -0.02em; color: #e4e4e7; position: relative; display: inline-block; width: fit-content; }
+  .pains li .strike { position: absolute; left: -6px; top: 52%; height: 7px; background: var(--accent); border-radius: 4px; width: 0; }
+  .pains li .x { color: var(--accent); margin-right: 22px; font-weight: 900; }
+  .ticks { list-style: none; padding: 0; margin-top: 54px; display: grid; gap: 26px; }
+  .ticks li { font-size: 44px; font-weight: 650; display: flex; gap: 22px; align-items: center; }
+  .ticks li::before { content: "✓"; width: 58px; height: 58px; flex: none; border-radius: 50%; background: var(--accent); display: grid; place-items: center; font-size: 32px; font-weight: 900; }
+  .end .logo { width: 760px; height: auto; display: block; }
+  .cta { display: inline-block; margin-top: 60px; background: var(--accent); color: #fff; font-weight: 800; font-size: 50px; padding: 30px 52px; border-radius: 18px; }
+  .fine { margin-top: 34px; font-size: 26px; color: #8b8b93; line-height: 1.4; }
+  .bar { position: absolute; left: 70px; right: 70px; top: 1610px; height: 6px; border-radius: 3px; background: #27272a; overflow: hidden; }
+  .bar span { display: block; height: 100%; background: var(--accent); width: 0; }
+</style></head>
+<body><div id="stage"><div class="glow"></div></div>
+<script>
+const SPECS = {
+  d2c: [
+    { kind: "title", dur: 3.2, html: `<h1>Doing credit repair <em>on your own?</em></h1>` },
+    { kind: "pains", dur: 5.3, title: `Sound familiar?`, items: ["Guessing what to dispute", "Templates that get ignored", "Stuck at “verified”", "Missed deadlines"] },
+    { kind: "shot", dur: 5.0, h: `It finds the <em>real errors.</em>`, p: "Across all three bureaus, with the reason and the law for each.", img: "audit2x.png", from: [0.5, 0.20, 1.0], to: [0.36, 0.62, 1.55] },
+    { kind: "shot", dur: 4.5, h: `Freeze the <em>secondary bureaus</em> first.`, p: "Guided and free, one company at a time.", img: "freeze2x.png", from: [0.5, 0.05, 1.0], to: [0.5, 0.42, 1.25] },
+    { kind: "shot", dur: 6.0, h: `Letters in the <em>right order.</em>`, p: "Each one cites the Fair Credit Reporting Act section that applies.", img: "letter2x.png", from: [0.4, 0.05, 1.15], to: [0.4, 0.75, 1.15] },
+    { kind: "shot", dur: 5.0, h: `Every deadline, <em>tracked.</em>`, p: "You approve, print and mail. It tells you the next round.", img: "disputes2x.png", from: [0.5, 0.2, 1.0], to: [0.42, 0.3, 1.35] },
+    { kind: "shot", dur: 5.0, h: `A clear path to <em>funding.</em>`, p: "See exactly where you are and what comes next.", img: "journey2x.png", from: [0.5, 0.5, 1.0], to: [0.55, 0.62, 1.6] },
+    { kind: "end", dur: 6.0, html: `<img class="logo" src="assets/logo.png"><h1 style="margin-top:70px">Free to start.</h1><div><span class="cta">leverageiq100.com</span></div><p class="fine">$37 once when your letters are ready. We challenge only inaccurate, incomplete or unverifiable items. No result guaranteed. Sample data shown.</p>` },
+  ],
+  operator: [
+    { kind: "title", dur: 4.0, html: `<h1>Your clients trust you <em>with their money.</em></h1>` },
+    { kind: "shot", dur: 5.5, h: `Now offer <em>credit repair & funding.</em>`, p: "Under your brand: your logo, your colors, your link.", img: "op-branded.png", from: [0.5, 0.35, 1.0], to: [0.2, 0.08, 1.9] },
+    { kind: "shot", dur: 6.0, h: `Audits <em>all three bureaus.</em>`, p: "Real errors flagged, with the FCRA reason for each.", img: "audit2x.png", from: [0.5, 0.2, 1.0], to: [0.36, 0.62, 1.55] },
+    { kind: "shot", dur: 7.0, h: `Dispute rounds, <em>built in.</em>`, p: "Verification, method of verification, creditor disputes, identity theft and reinsertion.", img: "letter2x.png", from: [0.4, 0.05, 1.15], to: [0.4, 0.8, 1.15] },
+    { kind: "shot", dur: 6.5, h: `Know <em>what needs doing</em> today.`, p: "Clients approve and mail. Automatic reminders keep them moving.", img: "op-console-v.png", from: [0.5, 0.0, 1.0], to: [0.42, 0.18, 1.55] },
+    { kind: "shot", dur: 5.0, h: `Invite your <em>client list.</em>`, p: "Paste or upload it. Track who joins.", img: "op-invites.png", from: [0.5, 0.0, 1.0], to: [0.5, 0.55, 1.0] },
+    { kind: "shot", dur: 6.5, h: `Earn a share when clients <em>get funded.</em>`, p: "Funding requests flow into the Leverage IQ funding program.", img: "op-funding.png", from: [0.5, 0.0, 1.0], to: [0.55, 0.5, 1.7] },
+    { kind: "ticks", dur: 6.0, h: `Compliance tools, <em>built in.</em>`, items: ["Rights disclosure delivered first", "One-click e-signatures", "3-day cancellation enforced", "Client approves every letter", "Full activity record"] },
+    { kind: "end", dur: 7.5, html: `<img class="logo" src="assets/logo.png"><p style="font-size:40px;color:#e4e4e7;font-weight:600;margin-top:60px;line-height:1.3">For tax pros, credit repair firms<br>and funding brokers.</p><h1 style="margin-top:34px">$147<span style="font-size:52px;color:#a1a1aa">/month</span></h1><div><span class="cta" style="font-size:40px">leverageiq100.com/console/signup</span></div><p class="fine">Sample data shown. You are responsible for following the laws that apply to your business.</p>` },
+  ],
+};
+
+const name = new URLSearchParams(location.search).get("spec") || "d2c";
+const scenes = SPECS[name];
+let t0 = 0; for (const s of scenes) { s.start = t0; t0 += s.dur; }
+window.TOTAL = t0;
+const stage = document.getElementById("stage");
+const imgs = {};
+stage.insertAdjacentHTML("beforeend", `<img class="mark" src="assets/wordmark.png"><div class="bar"><span></span></div>`);
+const mark = stage.querySelector(".mark"), bar = stage.querySelector(".bar span");
+
+for (const s of scenes) {
+  const el = document.createElement("div"); el.className = "layer"; s.el = el;
+  if (s.kind === "title") el.innerHTML = `<div class="big">${s.html}</div>`;
+  if (s.kind === "end") el.innerHTML = `<div class="big end">${s.html}</div>`;
+  if (s.kind === "pains") el.innerHTML = `<div class="big"><h1 style="font-size:84px">${s.title}</h1><ul class="pains">${s.items.map((i) => `<li><span class="x">✕</span>${i}<span class="strike"></span></li>`).join("")}</ul></div>`;
+  if (s.kind === "ticks") el.innerHTML = `<div class="big"><h1 style="font-size:92px">${s.h}</h1><ul class="ticks">${s.items.map((i) => `<li>${i}</li>`).join("")}</ul></div>`;
+  if (s.kind === "shot") {
+    el.innerHTML = `<div class="cap"><h2>${s.h}</h2><p>${s.p}</p></div><div class="view"><img src="assets/${s.img}"></div><div class="tag">Sample data</div>`;
+    s.img_el = el.querySelector(".view img"); s.cap_el = el.querySelector(".cap");
+  }
+  stage.appendChild(el);
+}
+window.ready = Promise.all([...document.images].map((i) => i.decode().catch(() => {}))).then(() => document.fonts.ready);
+
+const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const outBack = (x) => 1 + 2.2 * Math.pow(x - 1, 3) + 1.2 * Math.pow(x - 1, 2);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const VW = 960, VH = 820, FADE = 0.4;
+
+window.render = (t) => {
+  bar.style.width = `${(t / window.TOTAL) * 100}%`;
+  for (const s of scenes) {
+    const lt = t - s.start, on = lt >= -FADE && lt <= s.dur + FADE;
+    if (!on) { s.el.style.opacity = 0; continue; }
+    const fin = clamp((lt + FADE) / (FADE * 2), 0, 1), fout = clamp((s.dur + FADE - lt) / (FADE * 2), 0, 1);
+    s.el.style.opacity = Math.min(fin, fout);
+    const p = clamp(lt / s.dur, 0, 1), e = ease(p);
+    const enter = clamp(lt / 0.6, 0, 1);
+    if (s.kind === "shot") {
+      const nw = s.img_el.naturalWidth, nh = s.img_el.naturalHeight;
+      const [fx, fy, z] = s.from.map((v, i) => v + (s.to[i] - v) * e);
+      const scale = (VW * z) / nw, w = nw * scale, h = nh * scale;
+      const x = clamp(VW / 2 - fx * w, Math.min(0, VW - w), 0), y = clamp(VH / 2 - fy * h, Math.min(0, VH - h), 0);
+      s.img_el.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+      s.cap_el.style.transform = `translateY(${(1 - outBack(enter)) * 40}px)`;
+    }
+    if (s.kind === "pains") {
+      const lis = s.el.querySelectorAll("li");
+      lis.forEach((li, i) => {
+        const a = clamp((lt - 0.4 - i * 0.9) / 0.35, 0, 1), k = clamp((lt - 0.75 - i * 0.9) / 0.35, 0, 1);
+        li.style.opacity = a; li.style.transform = `translateX(${(1 - a) * -40}px)`;
+        li.querySelector(".strike").style.width = `${ease(k) * 104}%`;
+        li.style.color = k > 0.5 ? "#71717a" : "#e4e4e7";
+      });
+    }
+    if (s.kind === "ticks") s.el.querySelectorAll("li").forEach((li, i) => {
+      const a = clamp((lt - 0.5 - i * 0.45) / 0.35, 0, 1);
+      li.style.opacity = a; li.style.transform = `translateY(${(1 - a) * 24}px)`;
+    });
+    if (s.kind === "title" || s.kind === "end") s.el.firstElementChild.style.transform = `translateY(${(1 - outBack(enter)) * 40}px) scale(${1 + 0.02 * e})`;
+  }
+  mark.style.opacity = scenes.find((s) => s.kind === "end" && t > s.start - FADE) ? 0 : 1;
+};
+</script></body></html>

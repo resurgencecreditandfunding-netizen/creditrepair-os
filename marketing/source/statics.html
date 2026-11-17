@@ -1,0 +1,149 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>statics</title>
+<style>
+  :root { --accent: #d04c1c; --ink: #0b0b0c; --blue: #1d4ed8; }
+  * { box-sizing: border-box; margin: 0; }
+  body { font-family: Inter, sans-serif; background: #333; }
+  .ad { position: relative; overflow: hidden; color: #fff; background: var(--ink); -webkit-font-smoothing: antialiased; }
+  .f45 { width: 1080px; height: 1350px; } .f916 { width: 1080px; height: 1920px; }
+  .pad { position: absolute; inset: 0; padding: 72px 72px 64px; display: flex; flex-direction: column; }
+  .glow { position: absolute; width: 1300px; height: 900px; left: -110px; border-radius: 50%; background: radial-gradient(closest-side, rgba(208,76,28,.42), rgba(208,76,28,0)); pointer-events: none; }
+  .mark { height: 44px; width: auto; display: block; align-self: flex-start; }
+  .eyebrow { font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); font-size: 24px; }
+  h1 { font-family: "Inter Display", Inter, sans-serif; font-weight: 800; letter-spacing: -0.035em; line-height: 1.02; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .shot { border-radius: 18px; overflow: hidden; border: 1px solid #2a2a2e; box-shadow: 0 40px 90px -30px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.04); background: #f4f4f5; }
+  .shot img { display: block; width: 100%; height: auto; }
+  .checks { list-style: none; padding: 0; display: grid; gap: 14px; }
+  .checks li { font-size: 31px; font-weight: 600; letter-spacing: -0.01em; display: flex; gap: 16px; align-items: center; color: #f4f4f5; }
+  .checks li::before { content: "✓"; flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 24px; font-weight: 900; }
+  .cta { display: inline-flex; align-items: center; gap: 14px; background: var(--accent); color: #fff; font-weight: 800; font-size: 34px; padding: 22px 38px; border-radius: 14px; letter-spacing: -0.01em; }
+  .url { font-size: 26px; color: #d4d4d8; font-weight: 600; }
+  .fine { font-size: 19px; color: #8b8b93; line-height: 1.35; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .pill { display: inline-block; font-size: 22px; font-weight: 700; padding: 10px 18px; border-radius: 999px; border: 2px solid #3f3f46; color: #e4e4e7; }
+  .x li { font-size: 34px; font-weight: 600; color: #52525b; display: flex; gap: 18px; align-items: center; }
+  .x li span { text-decoration: line-through; text-decoration-color: var(--accent); text-decoration-thickness: 4px; }
+  .checks.x li::before { content: "✕"; background: none; width: 34px; height: auto; color: var(--accent); font-weight: 900; font-size: 34px; display: block; }
+  .light { background: #fff; color: var(--ink); }
+  .light .fine { color: #71717a; }
+  .tag { position: absolute; font-size: 17px; color: #8b8b93; }
+</style></head>
+<body>
+
+<!-- ============ D2C · A · 4:5 ============ -->
+<div class="ad f45" id="d2c-a-4x5">
+  <div class="glow" style="top: 560px"></div>
+  <div class="pad">
+    <img class="mark" src="assets/wordmark.png">
+    <div class="eyebrow" style="margin-top: 54px">For business owners & future founders</div>
+    <h1 style="font-size: 86px; margin-top: 18px">DIY credit repair, <em>without the guesswork.</em></h1>
+    <ul class="checks" style="margin-top: 40px">
+      <li>Finds the errors across all 3 bureaus</li>
+      <li>Writes your letters in the right order</li>
+      <li>Tracks every deadline, every round</li>
+    </ul>
+    <div class="shot" style="margin: 40px 0 30px; width: 960px; transform: rotate(-1.2deg)"><img src="assets/journey2x.png"></div>
+    <div style="flex: 1"></div>
+    <div class="row"><span class="cta">Start free →</span><span class="url">leverageiq100.com</span></div>
+    <p class="fine" style="margin-top: 22px">Free to start. $37 once when your letters are ready. We challenge only inaccurate, incomplete or unverifiable items. No result guaranteed. Sample data shown.</p>
+  </div>
+</div>
+
+<!-- ============ D2C · B · 4:5 (pain list) ============ -->
+<div class="ad f45 light" id="d2c-b-4x5">
+  <div class="pad">
+    <div class="row"><img class="mark" src="assets/wordmark.png" style="filter: invert(1) hue-rotate(180deg) saturate(1.6)"><span class="pill" style="color:#3f3f46;border-color:#d4d4d8">Free to start</span></div>
+    <h1 style="font-size: 78px; margin-top: 56px">Doing credit repair on your own?</h1>
+    <ul class="checks x" style="margin-top: 36px; gap: 16px">
+      <li><span>Guessing what to dispute</span></li>
+      <li><span>Copy-and-paste templates</span></li>
+      <li><span>Stuck at "verified"</span></li>
+      <li><span>Lost track of deadlines</span></li>
+    </ul>
+    <h1 style="font-size: 64px; margin-top: 40px">Follow a <em>guided path</em> instead.</h1>
+    <div class="shot" style="margin-top: 36px; height: 300px; border-color: #e4e4e7; box-shadow: 0 30px 70px -30px rgba(0,0,0,.35)"><img src="assets/audit2x.png"></div>
+    <div style="flex: 1"></div>
+    <div class="row"><span class="cta">Start free →</span><span class="url" style="color:#3f3f46">leverageiq100.com</span></div>
+    <p class="fine" style="margin-top: 22px">Free to start. $37 once when your letters are ready. Accurate information can't be removed. No result guaranteed. Sample data shown.</p>
+  </div>
+</div>
+
+<!-- ============ D2C · A · 9:16 ============ -->
+<div class="ad f916" id="d2c-a-9x16">
+  <div class="glow" style="top: 900px; height: 1100px"></div>
+  <div class="pad" style="padding-top: 250px; padding-bottom: 330px">
+    <img class="mark" src="assets/wordmark.png" style="height: 50px">
+    <div class="eyebrow" style="margin-top: 50px">For business owners & future founders</div>
+    <h1 style="font-size: 84px; margin-top: 16px">DIY credit repair, <em>without the guesswork.</em></h1>
+    <ul class="checks" style="margin-top: 34px; gap: 14px">
+      <li>Finds the errors across all 3 bureaus</li>
+      <li>Writes your letters in the right order</li>
+      <li>Tracks every deadline, every round</li>
+      <li>Shows your path to business funding</li>
+    </ul>
+    <div class="shot" style="margin: 36px 0 30px; width: 900px; transform: rotate(-1.2deg)"><img src="assets/journey2x.png"></div>
+    <div style="flex: 1"></div>
+    <span class="cta" style="align-self: flex-start; font-size: 40px; padding: 26px 46px">Start free →</span>
+    <p class="fine" style="margin-top: 26px; font-size: 21px">leverageiq100.com · Free to start. $37 once when your letters are ready. No result guaranteed. Sample data shown.</p>
+  </div>
+</div>
+
+<!-- ============ OPERATOR · A · 4:5 ============ -->
+<div class="ad f45" id="op-a-4x5">
+  <div class="glow" style="top: 640px; background: radial-gradient(closest-side, rgba(208,76,28,.35), rgba(208,76,28,0))"></div>
+  <div class="pad">
+    <div class="row"><img class="mark" src="assets/wordmark.png"><span class="pill">For tax pros · credit repair firms · funding brokers</span></div>
+    <h1 style="font-size: 76px; margin-top: 52px">Offer credit repair & funding <em>under your own brand.</em></h1>
+    <p style="font-size: 30px; color: #d4d4d8; margin-top: 22px; line-height: 1.35">Leverage IQ audits reports, builds FCRA-based letters in rounds, and keeps your clients moving. You keep the relationship.</p>
+    <div style="position: relative; margin-top: 40px; height: 520px">
+      <div class="shot" style="position: absolute; left: 0; top: 0; width: 760px"><img src="assets/op-branded.png"></div>
+      <div class="shot" style="position: absolute; right: -40px; top: 200px; width: 640px; border-color: #3f3f46"><img src="assets/op-queue.png"></div>
+      <span class="tag" style="left: 4px; top: 488px">Your logo and colors on every client page</span>
+    </div>
+    <div class="row" style="flex-wrap: wrap; justify-content: flex-start; gap: 12px; margin-top: 8px">
+      <span class="pill">White-label</span><span class="pill">Letters in rounds</span><span class="pill">Auto client reminders</span><span class="pill">Funding revenue share</span>
+    </div>
+    <div style="flex: 1"></div>
+    <div class="row"><span class="cta">Get started →</span><span class="url"><b style="color:#fff; font-size: 34px">$147</b>/month</span></div>
+    <p class="fine" style="margin-top: 18px">leverageiq100.com/console/signup · Sample data shown. You are responsible for following the laws that apply to your business.</p>
+  </div>
+</div>
+
+<!-- ============ OPERATOR · B · 4:5 (tax pros) ============ -->
+<div class="ad f45 light" id="op-b-4x5">
+  <div class="pad">
+    <div class="row"><img class="mark" src="assets/wordmark.png" style="filter: invert(1) hue-rotate(180deg) saturate(1.6)"><span class="pill" style="color:#3f3f46;border-color:#d4d4d8">For tax professionals</span></div>
+    <h1 style="font-size: 82px; margin-top: 56px">Tax season ends. <em>Your client relationships don't have to.</em></h1>
+    <p style="font-size: 31px; color: #3f3f46; margin-top: 24px; line-height: 1.35">Add credit repair and a path to business funding to your practice, all year, under your name.</p>
+    <div class="shot" style="margin-top: 40px; border-color: #e4e4e7; box-shadow: 0 30px 70px -30px rgba(0,0,0,.35)"><img src="assets/op-queue.png"></div>
+    <ul class="checks" style="margin-top: 36px; gap: 12px">
+      <li style="color:#18181b; font-size: 29px">Invite your client list in minutes</li>
+      <li style="color:#18181b; font-size: 29px">Clients do the mailing; reminders do the chasing</li>
+      <li style="color:#18181b; font-size: 29px">Earn a share when clients get funded</li>
+    </ul>
+    <div style="flex: 1"></div>
+    <div class="row"><span class="cta">Get started →</span><span class="url" style="color:#3f3f46"><b style="color:#0b0b0c; font-size: 34px">$147</b>/month</span></div>
+    <p class="fine" style="margin-top: 18px">leverageiq100.com/console/signup · Sample data shown.</p>
+  </div>
+</div>
+
+<!-- ============ OPERATOR · A · 9:16 ============ -->
+<div class="ad f916" id="op-a-9x16">
+  <div class="glow" style="top: 1000px; height: 1000px; background: radial-gradient(closest-side, rgba(208,76,28,.35), rgba(208,76,28,0))"></div>
+  <div class="pad" style="padding-top: 250px; padding-bottom: 330px">
+    <img class="mark" src="assets/wordmark.png" style="height: 50px">
+    <div class="eyebrow" style="margin-top: 50px; font-size: 22px">For tax pros · credit repair firms · funding brokers</div>
+    <h1 style="font-size: 84px; margin-top: 18px">Offer credit repair & funding <em>under your own brand.</em></h1>
+    <p style="font-size: 32px; color: #d4d4d8; margin-top: 22px; line-height: 1.35">Audits, FCRA-based letters in rounds, and automatic client reminders. You keep the relationship.</p>
+    <div style="position: relative; margin-top: 44px; height: 560px">
+      <div class="shot" style="position: absolute; left: 0; top: 0; width: 860px"><img src="assets/op-branded.png"></div>
+      <div class="shot" style="position: absolute; right: -30px; top: 300px; width: 700px; border-color: #3f3f46"><img src="assets/op-queue.png"></div>
+    </div>
+    <div style="flex: 1"></div>
+    <div class="row"><span class="cta" style="font-size: 40px; padding: 26px 46px">Get started →</span><span class="url"><b style="color:#fff; font-size: 40px">$147</b>/month</span></div>
+    <p class="fine" style="margin-top: 22px; font-size: 21px">leverageiq100.com/console/signup · Sample data shown.</p>
+  </div>
+</div>
+
+</body></html>
