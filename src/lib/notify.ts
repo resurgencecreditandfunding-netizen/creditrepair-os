@@ -13,7 +13,9 @@ type Row = Record<string, any>;
 export const emailConfigured = () => !!process.env.RESEND_API_KEY;
 export const smsConfigured = () => !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_FROM);
 const FROM = () => process.env.NOTIFY_FROM || `${PRODUCT} <alerts@leverageiq100.com>`;
-const site = () => (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "");
+/** Same sending address, shown under another name (a company's own name for its clients). */
+export const fromAs = (name: string) => FROM().replace(/^[^<]*</, `${name.replace(/[<>"]/g, "")} <`);
+export const site = () => (process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || "").replace(/\/$/, "");
 
 /** US numbers only: returns +1XXXXXXXXXX, or null if it is not a valid US number. */
 export function normalizePhone(input: string): string | null {
@@ -43,15 +45,15 @@ export function recipientsForClient(client: Row): Recipient[] {
   return out;
 }
 
-async function sendEmail(to: string, subject: string, text: string) {
+export async function sendEmail(to: string, subject: string, text: string, from = FROM()) {
   const res = await fetch(`${process.env.RESEND_API_BASE ?? "https://api.resend.com"}/emails`, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: FROM(), to: [to], subject, text }),
+    body: JSON.stringify({ from, to: [to], subject, text }),
   });
   if (!res.ok) throw new Error(`email ${res.status}: ${(await res.text()).slice(0, 200)}`);
 }
-async function sendSms(to: string, body: string) {
+export async function sendSms(to: string, body: string) {
   const sid = process.env.TWILIO_ACCOUNT_SID!;
   const res = await fetch(`${process.env.TWILIO_API_BASE ?? "https://api.twilio.com"}/2010-04-01/Accounts/${sid}/Messages.json`, {
     method: "POST",

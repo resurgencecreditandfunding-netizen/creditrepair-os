@@ -165,3 +165,25 @@ export async function undoFreeze(f: FormData) {
   try { freeze.clearFreeze(c.id, s(f, "bureauId")); } catch (e) { back("/freeze", "error", message(e)); }
   redirect("/freeze");
 }
+
+// ---------- client sign-in by link ----------
+const signinTries = new Map<string, { n: number; until: number }>();
+export async function requestSignIn(f: FormData) {
+  const contact = s(f, "contact");
+  if (!contact) back("/login", "error", "Enter the email or mobile number you signed up with.");
+  const key = contact.toLowerCase();
+  const t = signinTries.get(key);
+  if (t && t.n >= 5 && t.until > Date.now()) back("/login", "error", "Too many requests. Try again in an hour.");
+  signinTries.set(key, { n: (t && t.until > Date.now() ? t.n : 0) + 1, until: Date.now() + 3600_000 });
+  const { sendSignInLinks } = await import("@/lib/signin");
+  const out = await sendSignInLinks(contact);
+  if (out.demoLinks?.length) redirect(out.demoLinks[0].url.replace(/^https?:\/\/[^/]*/, ""));
+  back("/login", "ok", contact.includes("@") ? "If that email matches an account, a sign-in link is on its way. Check your inbox and spam folder." : "If that number matches an account, a sign-in link is on its way by text.");
+}
+export async function completeSignIn(f: FormData) {
+  const { redeemToken } = await import("@/lib/signin");
+  const id = redeemToken(s(f, "token"));
+  if (!id) back("/login", "error", "That link has expired or was already used. Request a new one.");
+  await startSession(id!);
+  redirect("/dashboard");
+}

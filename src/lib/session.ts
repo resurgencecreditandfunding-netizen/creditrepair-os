@@ -29,7 +29,7 @@ export async function currentClient() {
 /** Sends the visitor to whichever onboarding step they still owe. */
 export async function requireClient() {
   const c = await currentClient();
-  if (!c) redirect("/start");
+  if (!c) redirect("/login");
   if (!c.disclosure_ack_at) redirect("/start/disclosure");
   if (!c.signed_at) redirect("/start/sign");
   return c;

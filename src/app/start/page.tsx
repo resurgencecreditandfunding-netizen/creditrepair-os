@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { startOnboarding } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
@@ -58,6 +59,7 @@ export default async function Start({ searchParams }: { searchParams: Promise<{ 
           <button className="btn accent big" type="submit">Continue</button>
           <p className="fine" style={{ marginTop: 14, marginBottom: 0 }}>We store only the last 4 digits of your Social Security number.</p>
         </form>
+        <p className="small muted">Already signed up? <Link href="/login">Sign in</Link></p>
       </main>
     </>
   );

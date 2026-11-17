@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS freezes (
   client_id TEXT NOT NULL, bureau_id TEXT NOT NULL, status TEXT NOT NULL, confirmation TEXT, at TEXT NOT NULL,
   PRIMARY KEY (client_id, bureau_id)
 );
+CREATE TABLE IF NOT EXISTS login_tokens (
+  token_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, expires_at TEXT NOT NULL, used_at TEXT, created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL
