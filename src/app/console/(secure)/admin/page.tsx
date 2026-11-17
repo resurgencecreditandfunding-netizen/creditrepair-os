@@ -9,7 +9,7 @@ import { fmt } from "@/lib/dates";
 import { requireOperator } from "@/lib/opsession";
 import { aiEnabled } from "@/lib/ai";
 import { DEMO } from "@/lib/store";
-import { emailConfigured, smsConfigured } from "@/lib/notify";
+import { emailConfigured, explainSendError, smsConfigured } from "@/lib/notify";
 
 const SUB: Record<string, [string, string]> = {
   active: ["Paying", "dark"], trialing: ["Trial", ""], past_due: ["Payment overdue", "accent"], pending: ["Signed up, not paid", "accent"],
@@ -165,7 +165,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
               <table><tbody>{b.activity.map((e, i) => (
                 <tr key={i}>
                   <td className="small muted" style={{ whiteSpace: "nowrap" }}>{new Date(e.at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
-                  <td className="small">{e.action.replace(/_/g, " ")}</td>
+                  <td className="small">{e.action.replace(/_/g, " ")}{/failed$/.test(e.action) && (() => { try { const err = JSON.parse(e.detail).error; return err ? <div style={{ color: "var(--accent-dark)" }}>{explainSendError(err)}</div> : null; } catch { return null; } })()}</td>
                   <td className="small muted">{e.client ? <Link href={`/console/clients/${e.client_id}`}>{e.client}</Link> : e.actor.replace(/^\w+:/, "")}{e.company ? ` · ${e.company}` : ""}</td>
                 </tr>
               ))}</tbody></table>

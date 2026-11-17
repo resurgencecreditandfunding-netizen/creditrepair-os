@@ -74,7 +74,7 @@ export function businessOverview(op: Operator) {
       requests: clients.filter((c) => c.fundingRequested),
     },
     operators, partners,
-    activity: d.prepare(`SELECT a.at, a.actor, a.action, c.name client, c.id client_id, t.name company FROM audit_log a
+    activity: d.prepare(`SELECT a.at, a.actor, a.action, a.detail, c.name client, c.id client_id, t.name company FROM audit_log a
       LEFT JOIN clients c ON c.id = a.client_id LEFT JOIN tenants t ON t.id = c.tenant_id ORDER BY a.seq DESC LIMIT 25`).all() as Row[],
   };
 }

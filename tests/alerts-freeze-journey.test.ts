@@ -116,3 +116,17 @@ describe("journey map", () => {
     expect(j.current?.detail).toMatch(/3 letters waiting/);
   });
 });
+
+describe("alert errors", () => {
+  it("are explained in words the owner can act on", () => {
+    expect(notify.explainSendError('email 403: {"statusCode":403,"message":"The leverageiq100.com domain is not verified. Please, add and verify your domain"}')).toMatch(/^Resend has not verified your sending domain yet/);
+    expect(notify.explainSendError('email 401: {"message":"API key is invalid"}')).toMatch(/did not accept the API key/);
+    expect(notify.explainSendError("email 429: rate limited")).toMatch(/sending limit/);
+    expect(notify.explainSendError("text 400: invalid number")).toBe("Twilio said: 400: invalid number");
+  });
+  it("come back from a failed test alert with the reason", async () => {
+    process.env.RESEND_API_KEY = "re_x";
+    vi.stubGlobal("fetch", vi.fn(async () => new Response('{"statusCode":403,"message":"The leverageiq100.com domain is not verified"}', { status: 403 })));
+    await expect(notify.sendTestAlert("tenant_default")).rejects.toThrow(/Resend has not verified your sending domain yet/);
+  });
+});

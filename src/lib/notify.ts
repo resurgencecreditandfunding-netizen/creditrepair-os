@@ -71,11 +71,14 @@ export async function deliver(recipients: Recipient[], msg: { subject: string; t
     if (r.phone && smsConfigured()) jobs.push(sendSms(r.phone, msg.sms).then(() => log(clientId, "system", "alert_sent", { to: r.who, channel: "text" })));
   }
   const results = await Promise.allSettled(jobs);
+  const errors: string[] = [];
   for (const x of results) if (x.status === "rejected") {
-    log(clientId, "system", "alert_failed", { error: String((x.reason as Error)?.message ?? x.reason).slice(0, 300) });
+    const error = String((x.reason as Error)?.message ?? x.reason).slice(0, 300);
+    errors.push(error);
+    log(clientId, "system", "alert_failed", { error });
     console.error("[alerts]", x.reason);
   }
-  return { attempted: jobs.length, failed: results.filter((x) => x.status === "rejected").length };
+  return { attempted: jobs.length, failed: errors.length, errors };
 }
 
 const STAGE: Record<string, string> = { operating: "Owns an operating business", starting: "Starting a business", planning: "Plans to start later", none: "No business" };
@@ -133,7 +136,7 @@ export async function sendTestAlert(tenantId: string) {
   if (!emailConfigured() && !smsConfigured()) throw new Error("Alerts are not switched on yet. The platform needs an email or text service key.");
   const out = await deliver([r], { subject: `${PRODUCT} test alert`, text: "This is a test. Sign-up alerts are working.", sms: `${PRODUCT}: test alert. Sign-up alerts are working.` }, null);
   if (!out.attempted) throw new Error(r.email && !emailConfigured() ? "Email alerts are not switched on yet; only text is." : "Text alerts are not switched on yet; only email is.");
-  if (out.failed) throw new Error("The test did not go through. The error is in the activity log on the Business page.");
+  if (out.failed) throw new Error(`The test did not go through. ${explainSendError(out.errors[0])}`);
 }
 
 /** A client asked for a funding review: always tells the owner, who runs funding, and the client's company. */
@@ -152,4 +155,21 @@ export async function fundingRequested(clientId: string) {
       sms: `${PRODUCT}: funding request from ${c.name} (${label}).`,
     }, clientId);
   } catch (e) { console.error("[alerts]", e); }
+}
+
+/** Turns a provider's reply into something the owner can act on. */
+export function explainSendError(raw: string): string {
+  const e = raw.toLowerCase();
+  if (e.startsWith("email")) {
+    if (e.includes("not verified") || e.includes("verify a domain") || e.includes("domain") && e.includes("403"))
+      return `Resend has not verified your sending domain yet. In Resend, open Domains, add the DNS records it lists to GoDaddy, and click Verify. (Resend said: ${raw.slice(10, 180)})`;
+    if (e.includes(" 401") || e.includes("api key") || e.includes("api_key"))
+      return `Resend did not accept the API key. Check RESEND_API_KEY in Render: it should start with re_ and have no spaces. (Resend said: ${raw.slice(10, 180)})`;
+    if (e.includes(" 422") && e.includes("from"))
+      return `Resend rejected the sender address. The sending address must be on your verified domain. (Resend said: ${raw.slice(10, 180)})`;
+    if (e.includes(" 429")) return "Resend's sending limit was reached. Wait a few minutes, or check your Resend plan's daily limit.";
+    return `Resend said: ${raw.slice(6, 220)}`;
+  }
+  if (e.startsWith("text")) return `Twilio said: ${raw.slice(5, 220)}`;
+  return raw;
 }
