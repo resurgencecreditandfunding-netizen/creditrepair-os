@@ -8,7 +8,7 @@ import * as store from "@/lib/store";
 import { BUREAU_NAME } from "@/lib/types";
 
 const STATUS: Record<string, [string, string]> = {
-  draft: ["Needs your approval", "red"], attested: ["Approved, ready to mail", "dark"],
+  draft: ["Needs your approval", "accent"], attested: ["Approved, ready to mail", "dark"],
   mailed: ["Mailed, awaiting response", ""], closed: ["Closed", ""],
 };
 const CASE_STATUS: Record<string, string> = {
@@ -42,7 +42,7 @@ export default async function Disputes({ searchParams }: { searchParams: Promise
         <div className="card row between">
           <div><h2 style={{ margin: 0 }}>{ready} item{ready === 1 ? "" : "s"} ready for a letter</h2>
             <div className="small muted">One letter is drafted per bureau or company. Nothing is sent until you approve it.</div></div>
-          <form action={prepareLetters}><button className="btn red" type="submit" disabled={!canServe || !ready}>Prepare letters</button></form>
+          <form action={prepareLetters}><button className="btn accent" type="submit" disabled={!canServe || !ready}>Prepare letters</button></form>
         </div>
 
         <h2 style={{ marginTop: 24 }}>Letters</h2>
@@ -60,7 +60,7 @@ export default async function Disputes({ searchParams }: { searchParams: Promise
                 {l.mailed_at ? ` · mailed ${fmt(l.mailed_at)} · response due ${fmt(l.due_at)}` : ""}
               </div>
             </div>
-            <Link className={`btn ${l.status === "draft" ? "red" : ""}`} href={`/disputes/${l.id}`}>{l.status === "draft" ? "Review" : "Open"}</Link>
+            <Link className={`btn ${l.status === "draft" ? "accent" : ""}`} href={`/disputes/${l.id}`}>{l.status === "draft" ? "Review" : "Open"}</Link>
           </div>
         ))}
 

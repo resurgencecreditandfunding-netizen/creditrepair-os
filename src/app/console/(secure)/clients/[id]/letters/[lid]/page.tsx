@@ -40,7 +40,7 @@ export default async function OpLetter({ params, searchParams }: { params: Promi
               <form action={opMailLetter} className="row" style={{ alignItems: "flex-end" }}>
                 <Ids />
                 <div style={{ flex: "1 1 240px" }}><label htmlFor="tracking">Certified mail tracking number</label><input id="tracking" type="text" name="tracking" required /></div>
-                <button className="btn red" type="submit">Mark as mailed today</button>
+                <button className="btn accent" type="submit">Mark as mailed today</button>
                 <PrintButton />
               </form>
             </div>

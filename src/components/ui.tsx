@@ -1,11 +1,20 @@
 import Link from "next/link";
+import { PRODUCT } from "@/lib/brand";
+
+/** The platform logo for its own pages; a licensed company's name as text for theirs. */
+function Mark({ brand }: { brand: string }) {
+  return brand === PRODUCT ? <img src="/wordmark.png" alt={PRODUCT} width={720} height={119} /> : <><i />{brand}</>;
+}
+export function ConsoleBrand() {
+  return <Link href="/console" className="brand"><img src="/wordmark.png" alt={PRODUCT} width={720} height={119} /><small>Operator console</small></Link>;
+}
 
 export function TopBar({ brand, active, nav = true }: { brand: string; active?: string; nav?: boolean }) {
   const items = [["dashboard", "Dashboard"], ["report", "Credit report"], ["disputes", "Disputes"], ["funding", "Funding"], ["documents", "Documents"]];
   return (
     <header className="topbar">
       <div className="topbar-in">
-        <Link href={nav ? "/dashboard" : "/"} className="brand"><i />{brand}</Link>
+        <Link href={nav ? "/dashboard" : "/"} className="brand"><Mark brand={brand} /></Link>
         {nav && (
           <nav className="nav">
             {items.map(([k, label]) => <Link key={k} href={`/${k}`} className={active === k ? "on" : ""}>{label}</Link>)}
@@ -26,7 +35,7 @@ export function ConsoleBar({ active, name, signOut }: { active?: string; name: s
   return (
     <header className="topbar">
       <div className="topbar-in">
-        <Link href="/console" className="brand"><i />Operator console</Link>
+        <ConsoleBrand />
         <nav className="nav" style={{ flex: 1 }}>
           {items.map(([k, label]) => <Link key={k} href={`/console/${k}`} className={active === k ? "on" : ""}>{label}</Link>)}
         </nav>

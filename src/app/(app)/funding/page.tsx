@@ -15,7 +15,7 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
     <>
       <TopBar brand={store.brandOf(c).name} active="funding" />
       <main className="wrap">
-        <div className="row between"><h1>Funding</h1><span className={`pill ${f.unlocked ? "dark" : "red"}`}>{f.unlocked ? "Open" : "Locked"}</span></div>
+        <div className="row between"><h1>Funding</h1><span className={`pill ${f.unlocked ? "dark" : "accent"}`}>{f.unlocked ? "Open" : "Locked"}</span></div>
         <p className="muted">{f.reason}</p>
         <Flash {...sp} />
 
@@ -37,7 +37,7 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
             <h2>You are ready for a funding review</h2>
             <p>We compare your profile with credit union and lender requirements and show you the options you are likely to qualify for. Seeking funding is optional. We are paid by the lender only if you choose a product, and we tell you about that compensation before you apply.</p>
             {requested ? <span className="pill dark">Funding review requested</span> : (
-              <form action={requestFunding}><button className="btn red big" type="submit">Request my funding review</button></form>
+              <form action={requestFunding}><button className="btn accent big" type="submit">Request my funding review</button></form>
             )}
             <p className="fine" style={{ marginTop: 14, marginBottom: 0 }}>No approval, amount, or terms are guaranteed. Every application must be truthful and complete.</p>
           </div>
@@ -50,7 +50,7 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
               <thead><tr><th>Factor</th><th>You</th><th></th><th>Target</th></tr></thead>
               <tbody>{f.factors.map((x) => (
                 <tr key={x.label}><td>{x.label}</td><td><strong>{x.value}</strong></td>
-                  <td><span className={`pill ${x.ok ? "dark" : "red"}`}>{x.ok ? "On target" : "Needs work"}</span></td>
+                  <td><span className={`pill ${x.ok ? "dark" : "accent"}`}>{x.ok ? "On target" : "Needs work"}</span></td>
                   <td className="small muted">{x.tip}</td></tr>
               ))}</tbody>
             </table></div>

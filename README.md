@@ -1,4 +1,4 @@
-# Credit and Funding OS
+# Leverage IQ
 
 Free credit repair that leads into business funding. Phase 1: onboarding and signing, report audit, dispute rounds, funding gate.
 
@@ -19,7 +19,7 @@ npm test
 
 | Variable | Purpose |
 |---|---|
-| `BRAND_NAME` | Product name clients see. Placeholder: CreditOS. |
+| `BRAND_NAME` | Product name clients see. Defaults to Leverage IQ. |
 | `LEGAL_NAME`, `BRAND_ADDRESS` | Contracting company and its principal address, printed in the contract. Defaults to Resurgence Consulting Services Incorporated; the address is required by law before launch. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Creates the first platform-owner console login on first start. |
 | `SESSION_SECRET` | Signs the session cookie. Required in production. |

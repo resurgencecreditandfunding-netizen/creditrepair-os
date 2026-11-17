@@ -32,7 +32,7 @@ export default async function Documents({ searchParams }: { searchParams: Promis
               <p className="small muted">You can cancel at any time, for any reason, at no cost. Your 3-business-day right to cancel runs through {fmt(store.cancelDeadline(c.signed_at.slice(0, 10)))}, and you may still cancel after that.</p>
               <form action={cancel}><button className="btn" type="submit">Cancel my services</button></form>
             </>
-          ) : <span className="pill red">Services cancelled</span>}
+          ) : <span className="pill accent">Services cancelled</span>}
         </div>
 
         <details className="card">

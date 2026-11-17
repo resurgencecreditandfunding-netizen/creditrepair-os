@@ -47,7 +47,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </ol>
         <div className="notice row between">
           <span><strong>Next step.</strong> {next.text}</span>
-          <Link className="btn red" href={next.href}>{next.cta}</Link>
+          <Link className="btn accent" href={next.href}>{next.cta}</Link>
         </div>
 
         <div className="grid g3">
@@ -75,7 +75,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             </tbody></table>
           </div>
           <div className="card">
-            <div className="row between"><h2>Funding</h2><span className={`pill ${funding.unlocked ? "dark" : "red"}`}>{funding.unlocked ? "Open" : "Locked"}</span></div>
+            <div className="row between"><h2>Funding</h2><span className={`pill ${funding.unlocked ? "dark" : "accent"}`}>{funding.unlocked ? "Open" : "Locked"}</span></div>
             <p>{funding.reason}</p>
             {!funding.unlocked && funding.current !== null && (
               <>

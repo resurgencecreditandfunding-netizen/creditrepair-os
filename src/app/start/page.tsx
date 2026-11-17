@@ -55,7 +55,7 @@ export default async function Start({ searchParams }: { searchParams: Promise<{ 
               </select>
             </div>
           </div>
-          <button className="btn red big" type="submit">Continue</button>
+          <button className="btn accent big" type="submit">Continue</button>
           <p className="fine" style={{ marginTop: 14, marginBottom: 0 }}>We store only the last 4 digits of your Social Security number.</p>
         </form>
       </main>

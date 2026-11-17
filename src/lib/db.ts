@@ -95,11 +95,13 @@ export function db(): DatabaseSync {
   // The platform's own tenant. BRAND_NAME is the product name; LEGAL_NAME is the contracting company.
   d.prepare("INSERT OR IGNORE INTO tenants (id, slug, name, address, kind, legal_name) VALUES (?,?,?,?,?,?)").run(
     "tenant_default", "default",
-    process.env.BRAND_NAME ?? "CreditOS",
+    process.env.BRAND_NAME ?? "Leverage IQ",
     process.env.BRAND_ADDRESS ?? "220 Sheila Ave, Daytona Beach, FL 32114",
     "direct",
     process.env.LEGAL_NAME ?? "Resurgence Consulting Services Incorporated",
   );
+  // Carry the earlier placeholder product name forward on databases created before the name was chosen.
+  d.prepare("UPDATE tenants SET name = ? WHERE id = 'tenant_default' AND name = 'CreditOS'").run(process.env.BRAND_NAME ?? "Leverage IQ");
   seedAdmin(d);
   seedMonitoring(d);
   g.__cfoDb = d;

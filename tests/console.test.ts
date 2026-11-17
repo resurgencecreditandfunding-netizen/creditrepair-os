@@ -65,7 +65,7 @@ describe("contracts name the right company", () => {
   it("uses Resurgence Consulting Services Incorporated for direct clients, not the product name", () => {
     const direct = store.createClient(person("default", "Dana Cole"));
     const all = docs.contractDocs(store.brandOf(store.getClient(direct)!), "x");
-    expect(all.find((d) => d.key === "service_agreement")!.body).toContain("Resurgence Consulting Services Incorporated (which provides this service under the name CreditOS)");
+    expect(all.find((d) => d.key === "service_agreement")!.body).toContain("Resurgence Consulting Services Incorporated (which provides this service under the name Leverage IQ)");
     expect(all.find((d) => d.key === "limited_authorization")!.body).toContain("You authorize Resurgence Consulting Services Incorporated to");
   });
 });

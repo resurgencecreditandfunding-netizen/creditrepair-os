@@ -35,7 +35,7 @@ export default async function Letter({ params, searchParams }: { params: Promise
               <form action={approveLetter}>
                 <Hidden />
                 <label className="check"><input type="checkbox" name="attest" required /><span>{store.ATTESTATION}</span></label>
-                <button className="btn red" type="submit">Approve this letter</button>
+                <button className="btn accent" type="submit">Approve this letter</button>
               </form>
               <div className="row" style={{ marginTop: 12 }}>
                 {aiEnabled() && <form action={reword}><Hidden /><button className="btn" type="submit">Reword in plain language (AI)</button></form>}
@@ -57,7 +57,7 @@ export default async function Letter({ params, searchParams }: { params: Promise
               <form action={mailLetter} className="row" style={{ alignItems: "flex-end" }}>
                 <Hidden />
                 <div style={{ flex: "1 1 240px" }}><label htmlFor="tracking">Certified mail tracking number</label><input id="tracking" type="text" name="tracking" required /></div>
-                <button className="btn red" type="submit">Mark as mailed today</button>
+                <button className="btn accent" type="submit">Mark as mailed today</button>
                 <PrintButton />
               </form>
               <form action={discardLetter} style={{ marginTop: 10 }}><Hidden /><button className="btn link" type="submit">Discard</button></form>

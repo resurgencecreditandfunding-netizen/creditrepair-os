@@ -24,7 +24,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
 
         {tenants.map((t) => (
           <div className="card" key={t.id}>
-            <div className="row between"><h2 style={{ margin: 0 }}>{t.name}</h2><span className="row" style={{ gap: 6 }}><span className={`pill ${["active", "trialing", "exempt"].includes(t.sub_status) ? "" : "red"}`}>{SUB[t.sub_status] ?? t.sub_status}</span><span className="pill">{KIND[t.kind] ?? t.kind} · {t.clients} client{t.clients === 1 ? "" : "s"}</span></span></div>
+            <div className="row between"><h2 style={{ margin: 0 }}>{t.name}</h2><span className="row" style={{ gap: 6 }}><span className={`pill ${["active", "trialing", "exempt"].includes(t.sub_status) ? "" : "accent"}`}>{SUB[t.sub_status] ?? t.sub_status}</span><span className="pill">{KIND[t.kind] ?? t.kind} · {t.clients} client{t.clients === 1 ? "" : "s"}</span></span></div>
             <p className="small muted" style={{ margin: "6px 0 10px" }}>Contracting company: {t.legal_name ?? t.name} · {t.address}</p>
             <div className="label">Client sign-up link</div>
             <p><code>{origin}/?t={t.slug}</code></p>

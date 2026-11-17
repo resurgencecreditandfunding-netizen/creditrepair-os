@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TopBar } from "@/components/ui";
+import { PRODUCT, TAGLINE } from "@/lib/brand";
 import { getTenant } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +11,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   const start = t ? `/start?t=${encodeURIComponent(t)}` : "/start";
   return (
     <>
-      <TopBar brand={tenant.name} nav={false} />
+      {tenant.name !== PRODUCT && <TopBar brand={tenant.name} nav={false} />}
       <section className="hero">
         <div className="hero-in">
+          {tenant.name === PRODUCT && <img className="hero-logo" src="/logo.png" alt={`${PRODUCT}. ${TAGLINE}.`} width={1200} height={247} />}
           <h1>Fix what is wrong on your credit. <em>Then get funded.</em></h1>
           <p>We find the errors on your credit reports, prepare each dispute in your name, and track every deadline. It costs you nothing. When your score improves, your business funding options open.</p>
-          <Link href={start} className="btn red big">Start free</Link>
+          <Link href={start} className="btn accent big">Start free</Link>
           <p className="fine">The credit service is free. We are paid by lenders only if you later choose funding through us, and you never have to. We dispute only information that is inaccurate, incomplete, or unverifiable; accurate information cannot be removed. No result, score change, or loan approval is guaranteed. You can dispute errors with the credit bureaus yourself at no cost.</p>
         </div>
       </section>

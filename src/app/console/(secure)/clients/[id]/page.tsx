@@ -11,7 +11,7 @@ import * as store from "@/lib/store";
 import { BUREAU_NAME, BUREAUS } from "@/lib/types";
 
 const LETTER: Record<string, [string, string]> = {
-  draft: ["Waiting on client approval", ""], attested: ["Approved, ready to mail", "red"],
+  draft: ["Waiting on client approval", ""], attested: ["Approved, ready to mail", "accent"],
   mailed: ["Mailed, awaiting response", ""], closed: ["Closed", ""],
 };
 const BUSINESS: Record<string, string> = { operating: "Owns an operating business", starting: "Starting a business", planning: "Plans to start later", none: "No business" };
@@ -41,7 +41,7 @@ export default async function Client({ params, searchParams }: { params: Promise
         <Link href="/console" className="small muted">← All clients</Link>
         <div className="row between" style={{ marginTop: 8 }}>
           <h1>{c.name}</h1>
-          <span className={`pill ${c.status === "active" ? "dark" : "red"}`}>{ops.stageName(sum.stage)}</span>
+          <span className={`pill ${c.status === "active" ? "dark" : "accent"}`}>{ops.stageName(sum.stage)}</span>
         </div>
         <p className="muted">{c.email}{c.phone ? ` · ${c.phone}` : ""} · {c.city}, {c.state} · {BUSINESS[c.business_stage] ?? c.business_stage}{c.funding_goal ? ` · goal: ${c.funding_goal}` : ""}</p>
         <Flash {...sp} />
@@ -66,7 +66,7 @@ export default async function Client({ params, searchParams }: { params: Promise
             <h2>Next action</h2>
             <p className="small muted">{ready} item{ready === 1 ? "" : "s"} ready for a letter. You can draft letters; only the client can approve them.</p>
             <div className="row">
-              <form action={opPrepareLetters}><Client /><button className="btn red" type="submit" disabled={!canServe || !ready}>Draft letters</button></form>
+              <form action={opPrepareLetters}><Client /><button className="btn accent" type="submit" disabled={!canServe || !ready}>Draft letters</button></form>
             </div>
             <form action={opUploadReport} className="row" style={{ marginTop: 14 }}>
               <Client />
@@ -81,12 +81,12 @@ export default async function Client({ params, searchParams }: { params: Promise
             {sum.fundingRequested && (
               <form action={opFundingHandled} className="row">
                 <Client /><input type="hidden" name="return" value="client" />
-                <span className="pill red">Client asked for a funding review</span>
+                <span className="pill accent">Client asked for a funding review</span>
                 <button className="btn" type="submit">Mark handled</button>
               </form>
             )}
             <table style={{ marginTop: 8 }}><tbody>{funding.factors.map((x) => (
-              <tr key={x.label}><td className="small">{x.label}</td><td className="small"><strong>{x.value}</strong></td><td><span className={`pill ${x.ok ? "" : "red"}`}>{x.ok ? "On target" : "Needs work"}</span></td></tr>
+              <tr key={x.label}><td className="small">{x.label}</td><td className="small"><strong>{x.value}</strong></td><td><span className={`pill ${x.ok ? "" : "accent"}`}>{x.ok ? "On target" : "Needs work"}</span></td></tr>
             ))}</tbody></table>
           </div>
         </div>

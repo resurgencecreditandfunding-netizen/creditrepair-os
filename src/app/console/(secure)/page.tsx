@@ -21,7 +21,7 @@ export default async function Console({ searchParams }: { searchParams: Promise<
   const funding = all.filter((r) => r.fundingRequested);
   const tenantName = (id: string) => tenants.find((t) => t.id === id)?.name ?? "";
   const stat = (label: string, n: number, hot = false) => (
-    <div className="card" style={{ marginBottom: 0 }}><div className="label">{label}</div><div className="stat" style={hot && n ? { color: "var(--red)" } : undefined}>{n}</div></div>
+    <div className="card" style={{ marginBottom: 0 }}><div className="label">{label}</div><div className="stat" style={hot && n ? { color: "var(--accent)" } : undefined}>{n}</div></div>
   );
 
   return (
@@ -45,11 +45,11 @@ export default async function Console({ searchParams }: { searchParams: Promise<
           {toMail.length + overdue.length + nextRound.length + funding.length === 0 && <span className="muted">Nothing is waiting on you.</span>}
           <table><tbody>
             {toMail.map(({ r, l }) => (
-              <tr key={l.id}><td><span className="pill red">Mail</span></td><td><strong>{r.client.name}</strong> approved a round {l.round} letter to {l.recipient_name}</td>
+              <tr key={l.id}><td><span className="pill accent">Mail</span></td><td><strong>{r.client.name}</strong> approved a round {l.round} letter to {l.recipient_name}</td>
                 <td style={{ textAlign: "right" }}><Link className="btn" href={`/console/clients/${r.client.id}/letters/${l.id}`}>Print and mail</Link></td></tr>
             ))}
             {overdue.map(({ r, l }) => (
-              <tr key={l.id}><td><span className="pill red">Overdue</span></td><td>{l.recipient_name} owed <strong>{r.client.name}</strong> a response by {fmt(l.due_at)}</td>
+              <tr key={l.id}><td><span className="pill accent">Overdue</span></td><td>{l.recipient_name} owed <strong>{r.client.name}</strong> a response by {fmt(l.due_at)}</td>
                 <td style={{ textAlign: "right" }}><Link className="btn" href={`/console/clients/${r.client.id}/letters/${l.id}`}>Record result</Link></td></tr>
             ))}
             {nextRound.map((r) => (
@@ -94,10 +94,10 @@ export default async function Console({ searchParams }: { searchParams: Promise<
                 <tr key={r.client.id}>
                   <td><Link href={`/console/clients/${r.client.id}`}><strong>{r.client.name}</strong></Link><div className="small muted">{r.client.email}</div></td>
                   {ops.isPlatform(op) && <td className="small">{tenantName(r.client.tenant_id)}</td>}
-                  <td><span className={`pill ${URGENT.includes(r.stage) ? "red" : ""}`}>{ops.stageName(r.stage)}</span></td>
+                  <td><span className={`pill ${URGENT.includes(r.stage) ? "accent" : ""}`}>{ops.stageName(r.stage)}</span></td>
                   <td>{r.now ?? "—"}{r.gain > 0 && <span className="small muted"> (+{r.gain})</span>}</td>
                   <td>{r.open}</td><td>{r.resolved}</td>
-                  <td className="small">{r.nextDue ? <span style={r.overdue ? { color: "var(--red)", fontWeight: 600 } : undefined}>{fmt(r.nextDue)}</span> : "—"}</td>
+                  <td className="small">{r.nextDue ? <span style={r.overdue ? { color: "var(--accent)", fontWeight: 600 } : undefined}>{fmt(r.nextDue)}</span> : "—"}</td>
                   <td>{r.fundingRequested ? <span className="pill dark">Requested</span> : r.fundingOpen ? <span className="pill">Open</span> : <span className="small muted">Locked</span>}</td>
                 </tr>
               ))}</tbody>

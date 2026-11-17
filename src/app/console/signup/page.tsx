@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { registerCompany } from "@/app/console/actions";
-import { Flash } from "@/components/ui";
+import { Flash, ConsoleBrand } from "@/components/ui";
 import { billingConfigured, PLAN_LABEL } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
   const open = billingConfigured();
   return (
     <>
-      <header className="topbar"><div className="topbar-in"><span className="brand"><i />Operator console</span></div></header>
+      <header className="topbar"><div className="topbar-in"><ConsoleBrand /></div></header>
       <main className="wrap narrow">
         <h1>Offer credit repair and funding to your clients</h1>
         <p className="muted">For tax professionals, funding professionals, and credit repair firms. {PLAN_LABEL}, cancel any time. Your clients are never charged by us.</p>
@@ -29,7 +29,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
             <div className="field"><label htmlFor="email">Work email</label><input id="email" name="email" type="email" required autoComplete="username" /></div>
             <div className="field"><label htmlFor="password">Password (10 or more characters)</label><input id="password" name="password" type="password" minLength={10} required autoComplete="new-password" /></div>
             <label className="check"><input type="checkbox" name="terms" required /><span>My company will follow the laws that apply to it, including the Credit Repair Organizations Act and my state's rules. We will not charge a client before services are fully performed, and we will dispute only information the client believes is inaccurate.</span></label>
-            <button className="btn red big" type="submit">Continue to payment</button>
+            <button className="btn accent big" type="submit">Continue to payment</button>
           </form>
         )}
         <p className="small muted">Already have a login? <Link href="/console/login">Sign in</Link></p>

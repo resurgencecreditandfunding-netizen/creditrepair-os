@@ -1,5 +1,5 @@
 import { manageBilling, signOutOperator, subscribe } from "@/app/console/actions";
-import { ConsoleBar, Flash } from "@/components/ui";
+import { ConsoleBar, Flash, ConsoleBrand } from "@/components/ui";
 import { billingConfigured, goodStanding, PLAN_LABEL } from "@/lib/billing";
 import { canManage, isPlatform } from "@/lib/console";
 import { requireOperator } from "@/lib/opsession";
@@ -27,11 +27,11 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
   return (
     <>
       {ok ? <ConsoleBar active="billing" name={op.name} signOut={signOutOperator} /> : (
-        <header className="topbar"><div className="topbar-in"><span className="brand" style={{ flex: 1 }}><i />Operator console</span>
+        <header className="topbar"><div className="topbar-in"><span style={{ flex: 1 }}><ConsoleBrand /></span>
           <form action={signOutOperator}><button className="btn link" type="submit" style={{ color: "#fff" }}>Sign out</button></form></div></header>
       )}
       <main className="wrap narrow">
-        <div className="row between"><h1>Billing</h1><span className={`pill ${ok && t.sub_status !== "past_due" ? "dark" : "red"}`}>{label}</span></div>
+        <div className="row between"><h1>Billing</h1><span className={`pill ${ok && t.sub_status !== "past_due" ? "dark" : "accent"}`}>{label}</span></div>
         <p className="muted">{t.name} · {PLAN_LABEL}</p>
         <Flash {...sp} />
         <div className="card">
@@ -39,7 +39,7 @@ export default async function Billing({ searchParams }: { searchParams: Promise<
           {!isPlatform(op) && t.sub_status !== "exempt" && (
             !billingConfigured() ? <div className="notice">Billing is not set up yet.</div>
             : needsCheckout ? (
-              canManage(op) ? <form action={subscribe}><button className="btn red big" type="submit">Subscribe for {PLAN_LABEL}</button></form>
+              canManage(op) ? <form action={subscribe}><button className="btn accent big" type="submit">Subscribe for {PLAN_LABEL}</button></form>
                 : <p className="muted">Ask your company admin to start the subscription.</p>
             ) : (
               <form action={manageBilling}><button className="btn" type="submit">Update card, see invoices, or cancel</button></form>

@@ -37,7 +37,7 @@ export default async function Sign() {
             You may cancel this contract without penalty or obligation at any time before midnight of the 3rd business day after the date on which you signed the contract ({fmt(deadline)}). See the Notice of Cancellation above for an explanation of this right.
           </p>
           <form action={signAll}>
-            <button className="btn red big" type="submit">Adopt signature and sign all</button>
+            <button className="btn accent big" type="submit">Adopt signature and sign all</button>
           </form>
         </div>
       </main>

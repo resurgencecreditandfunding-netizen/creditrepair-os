@@ -62,7 +62,7 @@ function Findings({ list }: { list: Finding[] }) {
       <div className="row" style={{ gap: 8 }}>
         <strong className="small">{f.title}</strong>
         <span className="pill">{BUREAU_NAME[f.bureau]}</span>
-        {f.severity === "high" && <span className="pill red">High impact</span>}
+        {f.severity === "high" && <span className="pill accent">High impact</span>}
       </div>
       <div className="small">{f.fact}</div>
       <div className="small muted">{f.statutes.join("; ")}</div>
@@ -113,11 +113,11 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
           <div className="row">
             <form action={uploadReport} className="row">
               <input type="file" name="file" accept=".pdf,.html,.htm,.json,application/pdf,text/html" required aria-label="Credit report file" />
-              <button className="btn red" type="submit">Upload report</button>
+              <button className="btn accent" type="submit">Upload report</button>
             </form>
             {store.DEMO && <form action={loadSample}><button className="btn" type="submit">Load demo report</button></form>}
           </div>
-          {!aiEnabled() && <p className="small" style={{ margin: "10px 0 0", color: "var(--red-dark)" }}>Report reading is not switched on yet, so PDF and HTML uploads will be refused.</p>}
+          {!aiEnabled() && <p className="small" style={{ margin: "10px 0 0", color: "var(--accent-dark)" }}>Report reading is not switched on yet, so PDF and HTML uploads will be refused.</p>}
         </div>
 
         {report?.source.includes("read by AI") && (
@@ -137,7 +137,7 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
                 <div className="card" key={a.id}>
                   <div className="row between">
                     <div><h3>{a.creditor}</h3><div className="small muted">{a.accountMask} · {a.kind}{a.originalCreditor && a.originalCreditor !== a.creditor ? ` · original creditor: ${a.originalCreditor}` : ""}</div></div>
-                    {list.length ? <span className="pill red">{list.length} finding{list.length > 1 ? "s" : ""}</span> : <span className="pill">No errors detected</span>}
+                    {list.length ? <span className="pill accent">{list.length} finding{list.length > 1 ? "s" : ""}</span> : <span className="pill">No errors detected</span>}
                   </div>
                   <div className="tablewrap" style={{ marginTop: 10 }}>
                     <table>

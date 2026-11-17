@@ -21,7 +21,7 @@ export default async function Disclosure() {
           <div className="doc" style={{ maxHeight: "none", background: "#fff", border: 0, padding: 0, margin: 0 }}>{doc.body}</div>
         </div>
         <form action={acknowledgeDisclosure}>
-          <button className="btn red big" type="submit">I have received and read this statement</button>
+          <button className="btn accent big" type="submit">I have received and read this statement</button>
         </form>
       </main>
     </>
