@@ -90,7 +90,7 @@ Free to start. $37 once when your letters are ready. No subscription.
 **Headline:** A guided path from errors to funding
 **Description:** Free to start. $37 once.
 **Button:** Sign Up
-**Link:** https://leverageiq100.com
+**Link:** https://leverageiq100.com/?utm_source=facebook&utm_medium=paid&utm_campaign=consumer-launch&utm_content=static-a
 
 ### Consumer B: light, pain checklist (`statics/d2c-b-4x5.png`)
 
@@ -110,7 +110,7 @@ Start free and see what's on your reports.
 **Headline:** Follow a guided path instead
 **Description:** Free to start. No subscription
 **Button:** Sign Up
-**Link:** https://leverageiq100.com
+**Link:** https://leverageiq100.com/?utm_source=facebook&utm_medium=paid&utm_campaign=consumer-launch&utm_content=static-b
 
 ### Consumer story (`statics/d2c-a-9x16.png`)
 
@@ -119,7 +119,7 @@ Stories show very little text, so keep it short.
 **Primary text:** DIY credit repair, without the guesswork. Start free.
 **Headline:** Free to start
 **Button:** Sign Up
-**Link:** https://leverageiq100.com
+**Link:** https://leverageiq100.com/?utm_source=facebook&utm_medium=paid&utm_campaign=consumer-launch&utm_content=story
 
 ### Operator A: white-label (`statics/op-a-4x5.png`)
 
@@ -142,7 +142,7 @@ $147 a month for your firm.
 **Headline:** Your brand. Your clients. Our engine.
 **Description:** $147/month for your firm
 **Button:** Learn More
-**Link:** https://leverageiq100.com/console/signup
+**Link:** https://leverageiq100.com/partners?utm_source=facebook&utm_medium=paid&utm_campaign=operators-launch&utm_content=static-a
 
 ### Operator B: tax professionals (`statics/op-b-4x5.png`)
 
@@ -164,16 +164,26 @@ No new staff and no software to build. $147 a month.
 **Headline:** Add credit & funding to your practice
 **Description:** $147/month. Cancel anytime.
 **Button:** Learn More
-**Link:** https://leverageiq100.com/console/signup
+**Link:** https://leverageiq100.com/partners?utm_source=facebook&utm_medium=paid&utm_campaign=operators-launch&utm_content=static-b
 
 ### Operator story (`statics/op-a-9x16.png`)
 
 **Primary text:** Offer credit repair and funding under your own brand. $147/month.
 **Headline:** Built for tax pros and brokers
 **Button:** Learn More
-**Link:** https://leverageiq100.com/console/signup
+**Link:** https://leverageiq100.com/partners?utm_source=facebook&utm_medium=paid&utm_campaign=operators-launch&utm_content=story
 
 ---
+
+## The two gateways and the tagged links
+
+- **Consumer ads** send people to `leverageiq100.com`, the consumer sales page. "Get started" there opens the client sign-up.
+- **Operator ads** send people to `leverageiq100.com/partners` (short link: `/pro`), the operator sales page. "Get started" there opens the company sign-up at $147 a month.
+- Each link above carries campaign tags. When someone signs up, your Business page credits the ad they clicked, under "Where sign-ups come from."
+- Use the same pattern for the videos: `utm_content=video` with the matching campaign:
+  - consumer: `https://leverageiq100.com/?utm_source=facebook&utm_medium=paid&utm_campaign=consumer-launch&utm_content=video`
+  - operator: `https://leverageiq100.com/partners?utm_source=facebook&utm_medium=paid&utm_campaign=operators-launch&utm_content=video`
+- In Meta, paste these into the ad's **Website URL** field exactly as shown. Keep each ad's link unique so you can compare them.
 
 ## Why the copy is worded this way
 
