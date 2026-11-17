@@ -76,6 +76,7 @@ export default async function Client({ params, searchParams }: { params: Promise
               <span className={`pill ${fz.complete ? "dark" : "accent"}`}>{fz.complete ? "✓" : "✗"} Freezes {fz.addressed} of {fz.total}</span>
             </p>
             {blocker && <p className="small" style={{ color: "var(--accent-dark)" }}>{blocker} Only the client can do this, in their own account.</p>}
+            {(c.price_cents ?? 0) > 0 && <p className="small"><span className={`pill ${c.paid_at ? "dark" : "accent"}`}>{c.paid_at ? `Letters paid ${fmt(c.paid_at.slice(0, 10))}` : `Letters not paid yet ($${(c.price_cents / 100).toFixed(2)})`}</span></p>}
             <div className="row">
               <form action={opPrepareLetters}><Client /><button className="btn accent" type="submit" disabled={!canServe || !ready || !!blocker}>Draft letters</button></form>
             </div>

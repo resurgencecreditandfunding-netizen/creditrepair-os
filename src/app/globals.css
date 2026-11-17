@@ -107,3 +107,10 @@ details summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .js-current .js-dot { background: var(--accent); border-color: var(--accent); color: var(--white); box-shadow: 0 0 0 4px #f6cdbb; }
 .js-next .js-dot { border-color: var(--black); color: var(--black); }
 .js-upcoming .js-title { color: var(--gray-7); font-weight: 500; }
+
+/* letter preview: hidden text is already scrambled on the server; the blur only signals it */
+.redacted { filter: blur(5px); user-select: none; -webkit-user-select: none; color: var(--gray-7); }
+@media print { .redacted { display: none; } }
+/* print every approved letter, one per page */
+.print-letter { break-after: page; page-break-after: always; }
+.print-letter:last-child { break-after: auto; page-break-after: auto; }

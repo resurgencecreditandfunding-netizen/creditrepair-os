@@ -25,7 +25,7 @@ describe("compliance gates", () => {
     const id = store.createClient(person);
     store.ackDisclosure(id, meta); store.signContract(id, person.name, meta);
     const { db } = await import("@/lib/db");
-    db().prepare("UPDATE clients SET signed_at = '2026-01-05T12:00:00Z', report_reviewed_at = '2026-01-06', freeze_done_at = '2026-01-06' WHERE id = ?").run(id);
+    db().prepare("UPDATE clients SET price_cents = 0, signed_at = '2026-01-05T12:00:00Z', report_reviewed_at = '2026-01-06', freeze_done_at = '2026-01-06' WHERE id = ?").run(id);
     store.saveReport(id, sample.sampleReport());
     store.setAssertion(id, "account", "acc_store", "accurate", "");
     expect(store.buildRound(id)).toBe(3); // one letter per bureau

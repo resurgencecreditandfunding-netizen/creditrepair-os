@@ -62,6 +62,13 @@ export function businessOverview(op: Operator) {
       resolved: n("SELECT COUNT(*) n FROM cases WHERE status = 'resolved'"),
       deleted: n("SELECT COUNT(*) n FROM cases WHERE resolution LIKE 'Deleted%'"),
     },
+    letters: {
+      price: (d.prepare("SELECT value FROM settings WHERE key = 'direct_price_cents'").get() as Row | undefined)?.value ?? process.env.DIRECT_PRICE_CENTS ?? "3700",
+      paid: n("SELECT COUNT(*) n FROM clients WHERE paid_at IS NOT NULL"),
+      paid30: n("SELECT COUNT(*) n FROM clients WHERE paid_at >= ?", since30),
+      revenue: ((d.prepare("SELECT COALESCE(SUM(paid_cents), 0) s FROM clients WHERE paid_at IS NOT NULL").get() as Row).s as number) / 100,
+      waiting: n(`SELECT COUNT(*) n FROM clients c WHERE c.price_cents > 0 AND c.paid_at IS NULL AND EXISTS (SELECT 1 FROM letters l WHERE l.client_id = c.id AND l.status = 'draft')`),
+    },
     funding: {
       open: clients.filter((c) => c.fundingOpen && c.client.status === "active").length,
       requests: clients.filter((c) => c.fundingRequested),

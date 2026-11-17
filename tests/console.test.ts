@@ -76,7 +76,7 @@ describe("client summary and queue", () => {
     expect(ops.summarize(store.getClient(clientA)!).stage).toBe("needs_report");
     store.ackDisclosure(clientA, meta); store.signContract(clientA, "Jordan Rivers", meta);
     const { db } = await import("@/lib/db");
-    db().prepare("UPDATE clients SET signed_at = '2026-01-05T12:00:00Z', report_reviewed_at = '2026-01-06', freeze_done_at = '2026-01-06' WHERE id = ?").run(clientA);
+    db().prepare("UPDATE clients SET price_cents = 0, signed_at = '2026-01-05T12:00:00Z', report_reviewed_at = '2026-01-06', freeze_done_at = '2026-01-06' WHERE id = ?").run(clientA);
     store.saveReport(clientA, sample.sampleReport(), "operator:a@smith.example");
     expect(ops.summarize(store.getClient(clientA)!).stage).toBe("needs_review");
     store.buildRound(clientA);

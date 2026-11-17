@@ -39,7 +39,12 @@ export function disclosureDoc(): Doc {
   return doc("croa_disclosure", "Consumer Credit File Rights", CROA_DISCLOSURE);
 }
 
-export function contractDocs(b: Brand, cancelBy: string): Doc[] {
+const usd = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+export function contractDocs(b: Brand, cancelBy: string, priceCents = 0): Doc[] {
+  const price = priceCents > 0
+    ? `1. Price. Starting is free: your account, the audit of your credit reports, the list of errors we find, and a preview of your dispute letters cost nothing. The total cost of these services is ${usd(priceCents)}, paid once, only after your dispute letters for your first round are complete and before you download them. That single payment also covers every letter we prepare for you in later rounds. There are no other fees, no subscription, and nothing is charged before your letters are complete. If we cannot deliver your completed letters after you pay, we will refund you in full.`
+    : `1. Price. The total cost of these services is $0.00. There is no setup fee, no monthly fee, and no fee of any kind for the credit services. No payment is due now or later.`;
   return [
     doc("esign_consent", "Consent to Electronic Records and Signatures",
 `You agree to receive this agreement, the required disclosures, and all later notices from ${co(b)} electronically, and to sign electronically. Your electronic signature has the same effect as a handwritten one.
@@ -49,7 +54,7 @@ You can ask for paper copies at any time at no charge, and you can withdraw this
     doc("service_agreement", "Credit Services Agreement",
 `This agreement is between you and ${party(b)}, ${b.address}.
 
-1. Price. The total cost of these services is $0.00. There is no setup fee, no monthly fee, and no fee of any kind for the credit services. No payment is due now or later.
+${price}
 
 2. Services we will perform.
    (a) Obtain your credit reports with your consent and review them for information that is inaccurate, incomplete, outdated, or unverifiable.
@@ -87,7 +92,7 @@ Signature: ____________________`),
 This authorization does not let us sign contracts for you, apply for credit for you, or speak to anyone as if we were you. You can revoke it at any time by cancelling.`),
 
     doc("funding_disclosure", "How We Are Paid, and Your Funding Options",
-`The credit services are free. ${co(b)} is paid only if you later choose a financing product through us. In that case the lender or partner may pay us a fee or commission, and we will tell you about that compensation before you apply.${b.platform ? ` Funding is arranged through our platform partner, ${b.platform}, which may receive a fee or commission from the lender and may share part of it with ${co(b)}.` : ""}
+`${priceCents > 0 ? `Your dispute letters cost ${usd(priceCents)}, paid once as described in your Credit Services Agreement. Apart from that, ${co(b)} is paid` : `The credit services are free. ${co(b)} is paid`} only if you later choose a financing product through us. In that case the lender or partner may pay us a fee or commission, and we will tell you about that compensation before you apply.${b.platform ? ` Funding is arranged through our platform partner, ${b.platform}, which may receive a fee or commission from the lender and may share part of it with ${co(b)}.` : ""}
 
 You are never required to apply for, or accept, any financing. Choosing not to seek funding does not affect your credit services and creates no charge.
 

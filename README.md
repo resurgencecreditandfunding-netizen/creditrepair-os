@@ -87,6 +87,13 @@ Platform owner only, and where the owner lands after sign-in. Shows estimated mo
 - Operators invite up to 500 people at once by email (never text), with their address and an unsubscribe link; tracked to sign-up.
 - Each company can link a lesson to any journey step. Clients get shareable win cards for deletions, score gains, funding unlocked and funding received, with a results-vary line and no report details.
 
+## $37 letters gate (direct clients)
+
+- The platform's own clients start free: sign-up, audit, findings and a letter preview cost nothing. The preview shows each letter's wording; each item's facts and citations are replaced on the server and blurred.
+- One payment (`DIRECT_PRICE_CENTS`, default 3700, or the price on the Business page) unlocks every letter in every round. Only then can the client read, approve, print and mail. The price is written into the agreement and locked in at signing; clients who signed a free agreement are never asked.
+- Stripe Checkout, one-time, promotion codes allowed (a 100%-off code for community members). Payment is confirmed on return from checkout and by the existing webhook.
+- Operators' clients are never charged by the platform.
+
 ## Operator subscription
 
 Companies sign up at `/console/signup`, pay through Stripe Checkout, and get console access when Stripe confirms payment. Access continues while a late payment is retried and closes on cancellation; their existing clients keep their own accounts. Companies the platform owner adds by hand are not charged.

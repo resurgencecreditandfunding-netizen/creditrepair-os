@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { prepareLetters } from "@/app/actions";
+import { prepareLetters, unlockLetters } from "@/app/actions";
+import { priceLabel } from "@/lib/paywall";
 import { Flash, TopBar } from "@/components/ui";
 import { fmt } from "@/lib/dates";
 import { groupFindings, STEP_NAME } from "@/lib/rounds";
@@ -45,6 +46,18 @@ export default async function Disputes({ searchParams }: { searchParams: Promise
         )}
         {c.status !== "active" && <div className="notice">Your services are cancelled. No further letters will be prepared.</div>}
 
+        {store.needsPayment(c) && letters.some((l) => l.status === "draft") && (
+          <div className="notice row between">
+            <span><strong>Your letters are ready to preview.</strong> Open any letter to see how it reads. Unlock all of them, every round, for {priceLabel(c.price_cents)}.</span>
+            <form action={unlockLetters}><button className="btn accent" type="submit">Unlock for {priceLabel(c.price_cents)}</button></form>
+          </div>
+        )}
+        {letters.some((l) => l.status === "attested") && (
+          <div className="notice gray row between">
+            <span>Approved letters are ready to print and mail.</span>
+            <Link className="btn" href="/disputes/print">Print all approved letters</Link>
+          </div>
+        )}
         <div className="card row between">
           <div><h2 style={{ margin: 0 }}>{ready} item{ready === 1 ? "" : "s"} ready for a letter</h2>
             <div className="small muted">Strongest items go first, up to 5 accounts per letter, one open letter per bureau at a time. Nothing is sent until you approve it.</div></div>

@@ -291,3 +291,9 @@ export async function saveLessonLinks(f: FormData) {
   try { (await import("@/lib/lessons")).saveLessons(op.tenant_id, links); } catch (e) { back("/console/settings", "error", message(e)); }
   back("/console/settings", "ok", "Lesson links saved. Clients see them on their journey map.");
 }
+
+export async function saveDirectPrice(f: FormData) {
+  const op = await requireOperator();
+  try { (await import("@/lib/paywall")).setDirectPrice(op, Number(s(f, "price").replace(/[$,\s]/g, ""))); } catch (e) { back("/console/admin", "error", message(e)); }
+  back("/console/admin", "ok", "Price saved. It applies to people who sign up from now on; anyone who already signed keeps the price in their agreement.");
+}

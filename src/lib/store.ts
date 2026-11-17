@@ -72,9 +72,10 @@ export const cancelDeadline = (signedDate: string) => addBusinessDays(signedDate
 export function signContract(clientId: string, signedName: string, m: Meta) {
   const client = getClient(clientId)!;
   if (!client.disclosure_ack_at) throw new Error("The disclosure must be acknowledged before the contract can be signed.");
-  const docs = contractDocs(brandOf(client), cancelDeadline(today()));
+  const price = priceAtSigning(client.tenant_id);
+  const docs = contractDocs(brandOf(client), cancelDeadline(today()), price);
   for (const doc of docs) saveAgreement(clientId, doc, "signed", signedName, m);
-  db().prepare("UPDATE clients SET signed_at = ? WHERE id = ?").run(now(), clientId);
+  db().prepare("UPDATE clients SET signed_at = ?, price_cents = ? WHERE id = ?").run(now(), price, clientId);
   log(clientId, "consumer", "contract_signed", { signedName, docs: docs.map((x) => ({ key: x.key, hash: x.hash })) });
 }
 export const getAgreements = (clientId: string) =>
@@ -257,6 +258,16 @@ export function draftableCases(clientId: string) {
   return getCases(clientId).filter((c) => c.status === "pending_letter" && !busy.has(recipientOf(c)));
 }
 
+// ---------- direct-client price ----------
+/** Price for the platform's own (direct) clients, in cents. Operators' clients are never charged by the platform. */
+export function directPriceCents(): number {
+  const v = db().prepare("SELECT value FROM settings WHERE key = 'direct_price_cents'").get() as Row | undefined;
+  return v ? Number(v.value) : Number(process.env.DIRECT_PRICE_CENTS ?? 3700);
+}
+export const priceAtSigning = (tenantId: string) => (tenantId === "tenant_default" ? directPriceCents() : 0);
+/** True while a client who agreed to a price has not paid it. Clients who signed a free agreement are never asked. */
+export const needsPayment = (c: Row) => (c.price_cents ?? 0) > 0 && !c.paid_at;
+
 export const ATTESTATION =
   "I have read this letter. To the best of my knowledge, each item in it is inaccurate, incomplete, or cannot be verified, and every statement in it is true. I approve sending it in my name.";
 
@@ -266,6 +277,7 @@ function ownLetter(clientId: string, id: string) {
   return l;
 }
 export function attestLetter(clientId: string, id: string) {
+  if (needsPayment(getClient(clientId)!)) throw new Error("Unlock your letters before approving them.");
   const l = ownLetter(clientId, id);
   if (l.status !== "draft") return;
   db().prepare("UPDATE letters SET status='attested', attested_at=? WHERE id=?").run(now(), id);

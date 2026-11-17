@@ -24,7 +24,7 @@ beforeAll(async () => {
   resp = await import("@/lib/responses"); files = await import("@/lib/files"); store = await import("@/lib/store"); db = (await import("@/lib/db")).db; sample = await import("@/lib/sample");
   id = store.createClient({ tenant: "default", name: "Jordan Rivers", email: "j@example.com", phone: "", address: "1 Main", city: "Daytona Beach", state: "FL", zip: "32114", dob: "1988-04-12", ssnLast4: "1234", businessStage: "operating", fundingGoal: "" });
   store.ackDisclosure(id, meta); store.signContract(id, "Jordan Rivers", meta);
-  db().prepare("UPDATE clients SET signed_at='2026-01-05T12:00:00Z', report_reviewed_at='2026-01-06', freeze_done_at='2026-01-06' WHERE id=?").run(id);
+  db().prepare("UPDATE clients SET price_cents = 0, signed_at = '2026-01-05T12:00:00Z', report_reviewed_at='2026-01-06', freeze_done_at='2026-01-06' WHERE id=?").run(id);
   store.saveReport(id, sample.sampleReport());
   store.buildRound(id);
   letter = (store.getLetters(id) as any[]).find((l) => l.recipient_bureau === "EQ");

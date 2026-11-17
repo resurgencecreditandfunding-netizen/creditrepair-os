@@ -21,12 +21,19 @@ export const goodStanding = (tenant: Row) => !tenant.suspended && OK.has(tenant.
 /** What one paying operator is worth per month, for the revenue estimate. */
 export const PLAN_MONTHLY = Number(process.env.PLAN_MONTHLY ?? 147);
 
-async function stripe(path: string, params: Record<string, string>): Promise<Row> {
+export async function stripe(path: string, params: Record<string, string>): Promise<Row> {
   const res = await fetch(`${API()}/v1/${path}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`, "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams(params),
   });
+  const json = (await res.json().catch(() => ({}))) as Row;
+  if (!res.ok) throw new Error(`Stripe: ${json.error?.message ?? `request failed (${res.status})`}`);
+  return json;
+}
+
+export async function stripeGet(path: string): Promise<Row> {
+  const res = await fetch(`${API()}/v1/${path}`, { headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}` } });
   const json = (await res.json().catch(() => ({}))) as Row;
   if (!res.ok) throw new Error(`Stripe: ${json.error?.message ?? `request failed (${res.status})`}`);
   return json;
@@ -72,6 +79,12 @@ export function verifyWebhook(payload: string, header: string | null, secret: st
 /** Applies a verified Stripe event. Safe to receive the same event more than once. */
 export function applyEvent(event: Row): string {
   const d = db(), o = event.data?.object ?? {};
+  if (event.type === "checkout.session.completed" && o.mode === "payment" && o.metadata?.kind === "letters" && o.metadata?.client_id) {
+    if (!["paid", "no_payment_required"].includes(o.payment_status)) return "letters not paid yet";
+    const r = d.prepare("UPDATE clients SET paid_at = ?, paid_cents = ?, payment_ref = ? WHERE id = ? AND paid_at IS NULL")
+      .run(new Date().toISOString(), o.amount_total ?? 0, o.payment_intent ?? o.id, o.metadata.client_id);
+    return r.changes ? "letters_paid" : "letters already paid";
+  }
   if (event.type === "checkout.session.completed" && o.mode === "subscription" && o.client_reference_id) {
     const r = d.prepare("UPDATE tenants SET sub_status='active', stripe_customer_id=?, stripe_subscription_id=? WHERE id=?")
       .run(o.customer, o.subscription, o.client_reference_id);

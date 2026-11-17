@@ -17,7 +17,7 @@ beforeAll(async () => { store = await import("@/lib/store"); db = (await import(
 function ready(name: string, report: CreditReport) {
   const id = store.createClient(person(name));
   store.ackDisclosure(id, meta); store.signContract(id, name, meta);
-  db().prepare("UPDATE clients SET signed_at='2026-01-05T12:00:00Z', report_reviewed_at='2026-01-06', freeze_done_at='2026-01-06' WHERE id=?").run(id);
+  db().prepare("UPDATE clients SET price_cents = 0, signed_at = '2026-01-05T12:00:00Z', report_reviewed_at='2026-01-06', freeze_done_at='2026-01-06' WHERE id=?").run(id);
   store.saveReport(id, report);
   return id;
 }

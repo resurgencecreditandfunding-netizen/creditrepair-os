@@ -5,7 +5,8 @@ import { fmt, today } from "@/lib/dates";
 import { contractDocs } from "@/lib/documents";
 import { brandBarFor } from "@/lib/branding";
 import { currentClient } from "@/lib/session";
-import { brandOf, cancelDeadline } from "@/lib/store";
+import { brandOf, cancelDeadline, priceAtSigning } from "@/lib/store";
+import { priceLabel } from "@/lib/paywall";
 
 export default async function Sign() {
   const c = await currentClient();
@@ -14,14 +15,15 @@ export default async function Sign() {
   if (c.signed_at) redirect("/dashboard");
   const brand = brandOf(c);
   const deadline = cancelDeadline(today());
-  const docs = contractDocs(brand, fmt(deadline));
+  const price = priceAtSigning(c.tenant_id);
+  const docs = contractDocs(brand, fmt(deadline), price);
   return (
     <>
       <TopBar {...brandBarFor(c)} nav={false} />
       <main className="wrap narrow">
         <ol className="steps"><li className="done">Your details</li><li className="done">Your rights</li><li className="now">Sign</li></ol>
         <h1>Review and sign</h1>
-        <p className="muted">Five short documents. One click signs all of them. Total cost: $0.</p>
+        <p className="muted">Five short documents. One click signs all of them. {price > 0 ? `Free to start; your completed letters are ${priceLabel(price)}, paid once, only when they are ready.` : "Total cost: $0."}</p>
         {docs.map((d, i) => (
           <details className="card" key={d.key} open={i === 1}>
             <summary>{d.title}</summary>

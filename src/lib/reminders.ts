@@ -21,6 +21,8 @@ export function messageFor(client: Row): { key: string; ask: string } | null {
     case "upload": return { key: cur.key, ask: "upload your 3-bureau credit report" };
     case "review": return { key: cur.key, ask: "review what we found on your credit report" };
     case "freeze": return { key: cur.key, ask: "finish freezing the secondary bureaus so your letters can be prepared" };
+    case "unlock_letters":
+      return letters.some((l) => l.status === "draft") ? { key: cur.key, ask: "preview your dispute letters. They are ready" } : { key: cur.key, ask: "prepare your dispute letters" };
     case "approve": {
       const drafts = letters.filter((l) => l.status === "draft").length;
       return { key: cur.key, ask: drafts ? `read and approve your ${drafts} dispute letter${drafts > 1 ? "s" : ""}` : "prepare your first dispute letters" };

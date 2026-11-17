@@ -152,7 +152,8 @@ export function db(): DatabaseSync {
   // Carry the earlier placeholder product name forward on databases created before the name was chosen.
   d.prepare("UPDATE tenants SET name = ? WHERE id = 'tenant_default' AND name = 'CreditOS'").run(process.env.BRAND_NAME ?? "Leverage IQ");
   seedAdmin(d);
-  for (const col of ["report_reviewed_at TEXT", "freeze_done_at TEXT", "sms_opt_in_at TEXT", "reminders_off INTEGER NOT NULL DEFAULT 0"]) {
+  for (const col of ["report_reviewed_at TEXT", "freeze_done_at TEXT", "sms_opt_in_at TEXT", "reminders_off INTEGER NOT NULL DEFAULT 0",
+    "price_cents INTEGER NOT NULL DEFAULT 0", "paid_at TEXT", "paid_cents INTEGER", "payment_ref TEXT"]) {
     try { d.exec(`ALTER TABLE clients ADD COLUMN ${col}`); } catch { /* column already exists */ }
   }
   seedMonitoring(d);

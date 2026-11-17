@@ -71,7 +71,7 @@ describe("sending alerts", () => {
 describe("freeze step and letter gate", () => {
   it("blocks letters until the report is reviewed and every bureau is addressed", () => {
     store.ackDisclosure(direct, meta); store.signContract(direct, "Dana Cole", meta);
-    db().prepare("UPDATE clients SET signed_at = '2026-01-05T12:00:00Z' WHERE id = ?").run(direct);
+    db().prepare("UPDATE clients SET price_cents = 0, signed_at = '2026-01-05T12:00:00Z' WHERE id = ?").run(direct);
     expect(() => freeze.markReviewed(direct)).toThrow(/Upload/);
     store.saveReport(direct, sample.sampleReport());
     expect(() => store.buildRound(direct)).toThrow(/Review your credit report/);

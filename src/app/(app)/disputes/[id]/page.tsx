@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { approveLetter, discardLetter, mailLetter, reword, saveOutcome, uploadReply, confirmReply } from "@/app/actions";
+import { approveLetter, discardLetter, mailLetter, reword, saveOutcome, uploadReply, confirmReply, unlockLetters } from "@/app/actions";
+import { previewSegments, priceLabel } from "@/lib/paywall";
 import { ResponseUpload, Suggested } from "@/components/ResponseUpload";
 import { filesFor } from "@/lib/files";
 import { pendingSuggestions } from "@/lib/responses";
@@ -20,6 +21,7 @@ export default async function Letter({ params, searchParams }: { params: Promise
   const sp = await searchParams;
   const l = store.getLetter(c.id, id) as any;
   if (!l) notFound();
+  const locked = store.needsPayment(c);
   const docs = filesFor(c.id, l.id);
   const sugg = pendingSuggestions(l, docs);
   const Hidden = () => <input type="hidden" name="id" value={l.id} />;
@@ -34,7 +36,20 @@ export default async function Letter({ params, searchParams }: { params: Promise
           <p className="muted">{STEP_NAME[l.step as keyof typeof STEP_NAME]}</p>
           <Flash {...sp} />
 
-          {l.status === "draft" && (
+          {l.status === "draft" && locked && (
+            <div className="card" style={{ borderColor: "var(--accent)" }}>
+              <h2>Your letter is ready</h2>
+              <p>This is a preview. The wording is shown; the specific facts and legal citations for each of your items are hidden until you unlock your letters.</p>
+              <ul className="small" style={{ margin: "0 0 14px", paddingLeft: 18 }}>
+                <li>One payment of <strong>{priceLabel(c.price_cents)}</strong> unlocks every letter in this round and every later round.</li>
+                <li>After unlocking, you read each full letter, approve it, then print and mail it.</li>
+                <li>No subscription. Nothing else to pay.</li>
+              </ul>
+              <form action={unlockLetters}><button className="btn accent big" type="submit">Unlock my letters for {priceLabel(c.price_cents)}</button></form>
+              <p className="fine" style={{ margin: "10px 0 0" }}>Secure checkout by Stripe. Have a promotion code? Enter it at checkout.</p>
+            </div>
+          )}
+          {l.status === "draft" && !locked && (
             <div className="card">
               <h2>Your approval</h2>
               <p className="small muted">Read the letter below. Approve it only if every statement is true. If an item is actually accurate, discard this draft and mark the item accurate on your report.</p>
@@ -97,7 +112,11 @@ export default async function Letter({ params, searchParams }: { params: Promise
             </div>
           )}
         </div>
-        <div className="paper">{l.body}</div>
+        {locked && l.status === "draft" ? (
+          <div className="paper" aria-label="Letter preview with details hidden">
+            {previewSegments(l.body).map((seg, i) => seg.hidden ? <span key={i} className="redacted" aria-hidden="true">{seg.text}</span> : seg.text)}
+          </div>
+        ) : <div className="paper">{l.body}</div>}
       </main>
     </>
   );

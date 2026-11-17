@@ -22,7 +22,7 @@ describe("win cards", () => {
   it("appear only for results the record backs up", () => {
     const id = store.createClient({ tenant: "default", name: "Jordan Rivers", email: "j@example.com", phone: "", address: "1", city: "C", state: "FL", zip: "32114", dob: "1988-04-12", ssnLast4: "1234", businessStage: "operating", fundingGoal: "" });
     store.ackDisclosure(id, meta); store.signContract(id, "Jordan Rivers", meta);
-    db().prepare("UPDATE clients SET signed_at='2026-01-05T12:00:00Z', report_reviewed_at='2026-01-06', freeze_done_at='2026-01-06' WHERE id=?").run(id);
+    db().prepare("UPDATE clients SET price_cents = 0, signed_at = '2026-01-05T12:00:00Z', report_reviewed_at='2026-01-06', freeze_done_at='2026-01-06' WHERE id=?").run(id);
     const first = sample.sampleReport();
     store.saveReport(id, first);
     expect(wins.winsFor(store.getClient(id)!)).toEqual([]);

@@ -7,7 +7,7 @@ type Row = Record<string, any>;
 /** Step keys and titles in order, for settings screens that list every step. */
 export const STEPS: [string, string][] = [
   ["account", "Create your account"], ["sign", "Sign your agreement"], ["monitor", "Get your 3-bureau report"], ["upload", "Upload your report"],
-  ["review", "Review your report"], ["freeze", "Freeze the secondary bureaus"], ["wait", "3-day review period ends"], ["approve", "Approve your round 1 letters"],
+  ["review", "Review your report"], ["freeze", "Freeze the secondary bureaus"], ["wait", "3-day review period ends"], ["unlock_letters", "Preview and unlock your letters (direct clients)"], ["approve", "Approve your round 1 letters"],
   ["mail", "Mail your letters"], ["responses", "Bureaus respond"], ["rounds", "Follow-up rounds as needed"], ["unlock", "Funding unlocks"], ["fund", "Lift your freezes and get funded"],
 ];
 export type StepStatus = "done" | "current" | "next" | "upcoming" | "skipped";
@@ -41,6 +41,9 @@ export function journey(client: Row) {
       done: !!client.freeze_done_at, href: "/freeze", cta: "Start freezes" },
     { key: "wait", title: "3-day review period ends", detail: client.signed_at ? `Federal law gives you until ${fmt(cancelDeadline(client.signed_at.slice(0, 10)))} to cancel. Letters can go out from ${fmt(serviceStartDate(client))}.` : "Starts when you sign.",
       done: !!client.signed_at && !waiting },
+    ...((client.price_cents ?? 0) > 0 ? [{ key: "unlock_letters", title: "Preview and unlock your letters",
+      detail: `Preview how your letters read for free, then unlock every letter, every round, for $${(client.price_cents / 100).toFixed(client.price_cents % 100 ? 2 : 0)} once.`,
+      done: !!client.paid_at, skip: nothingToDispute, href: "/disputes", cta: drafts ? "Preview my letters" : "Prepare my letters" }] : []),
     { key: "approve", title: "Approve your round 1 letters", detail: drafts ? `${drafts} letter${drafts > 1 ? "s" : ""} waiting for you to read and approve.` : "We write one letter per bureau. You read and approve each one.",
       done: r1.some((l) => l.attested_at), skip: nothingToDispute, href: "/disputes", cta: drafts ? "Review letters" : "Prepare letters" },
     { key: "mail", title: "Mail your letters", detail: toMail ? `${toMail} approved letter${toMail > 1 ? "s" : ""} ready to print and send by certified mail.` : "Print, sign and send by certified mail, then enter the tracking number.",

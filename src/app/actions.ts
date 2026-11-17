@@ -224,3 +224,18 @@ export async function unsubscribe(f: FormData) {
   const ok = (await import("@/lib/invites")).optOut(s(f, "i"));
   redirect(`/unsubscribe?done=${ok ? 1 : 0}`);
 }
+
+// ---------- $37 letters gate (direct clients) ----------
+async function siteOrigin() {
+  const fixed = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL;
+  if (fixed) return fixed.replace(/\/$/, "");
+  const h = await (await import("next/headers")).headers();
+  return `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
+}
+export async function unlockLetters() {
+  const c = await requireClient();
+  const { startCheckout } = await import("@/lib/paywall");
+  let url = "";
+  try { url = await startCheckout(c, await siteOrigin()); } catch (e) { back("/disputes", "error", message(e)); }
+  redirect(url);
+}

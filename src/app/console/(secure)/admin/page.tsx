@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { compCompany, editCompany, opFundingHandled, runRemindersNow, signOutOperator, suspendCompany } from "@/app/console/actions";
+import { compCompany, editCompany, opFundingHandled, runRemindersNow, saveDirectPrice, signOutOperator, suspendCompany } from "@/app/console/actions";
 import { ConsoleBar, Flash } from "@/components/ui";
 import { businessOverview } from "@/lib/admin";
 import { billingConfigured, PLAN_MONTHLY } from "@/lib/billing";
@@ -67,6 +67,21 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           <Stat label="Free access" value={b.revenue.comped} />
         </div>
         <p className="fine" style={{ marginTop: 8 }}>Monthly revenue is estimated from subscription status. Stripe is the record of what was actually collected.</p>
+
+        <h2 style={{ marginTop: 24 }}>Direct letter sales</h2>
+        <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
+          <Stat label="Letter sales" value={usd(b.letters.revenue)} sub={`${b.letters.paid} paid · ${b.letters.paid30} in 30 days`} />
+          <Stat label="Previewing, not paid" value={b.letters.waiting} sub="Letters ready, waiting to unlock" hot={b.letters.waiting > 0} />
+          <form action={saveDirectPrice} className="card" style={{ marginBottom: 0 }}>
+            <div className="label">Price for direct clients</div>
+            <div className="row" style={{ marginTop: 8 }}>
+              <input type="text" name="price" inputMode="decimal" defaultValue={(Number(b.letters.price) / 100).toString()} aria-label="Price in dollars" style={{ width: 90 }} />
+              <button className="btn dark" type="submit">Save</button>
+            </div>
+            <div className="small muted" style={{ marginTop: 6 }}>Applies to new sign-ups. 0 makes it free. Operators' clients are never charged.</div>
+          </form>
+        </div>
+        <p className="fine" style={{ marginTop: 8 }}>For community members, create a 100%-off promotion code in Stripe (Products, Coupons) and share it in the community; they enter it at checkout.</p>
 
         <h2 style={{ marginTop: 24 }}>Clients and results</h2>
         <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
