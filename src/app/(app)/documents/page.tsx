@@ -1,4 +1,4 @@
-import { cancel, signOut } from "@/app/actions";
+import { cancel, setReminderPrefs, signOut } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
 import { fmt } from "@/lib/dates";
 import { requireClient } from "@/lib/session";
@@ -24,6 +24,15 @@ export default async function Documents({ searchParams }: { searchParams: Promis
             <p className="fine" style={{ margin: "10px 0 0" }}>Version {d.doc_version} · {new Date(d.at).toUTCString()} · IP {d.ip} · document fingerprint {d.doc_hash.slice(0, 16)}…</p>
           </details>
         ))}
+
+        <form action={setReminderPrefs} className="card">
+          <h2>Reminders</h2>
+          <p className="small muted">We remind you when something is waiting on you, such as a letter to approve or a response deadline that has passed.</p>
+          <label className="check"><input type="checkbox" name="reminders" defaultChecked={!c.reminders_off} /><span>Send me reminders</span></label>
+          <label className="check"><input type="checkbox" name="texts" defaultChecked={!!c.sms_opt_in_at} disabled={!c.phone} />
+            <span>Also by text message{c.phone ? ` to ${c.phone}` : " (add a mobile number to your account first)"}. Message and data rates may apply. Reply STOP to opt out.</span></label>
+          <button className="btn dark" type="submit">Save</button>
+        </form>
 
         <div className="card">
           <h2>Cancel</h2>

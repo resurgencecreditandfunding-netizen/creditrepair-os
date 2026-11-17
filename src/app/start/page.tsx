@@ -56,6 +56,8 @@ export default async function Start({ searchParams }: { searchParams: Promise<{ 
               </select>
             </div>
           </div>
+          <label className="check"><input type="checkbox" name="smsOptIn" />
+            <span className="small">Text me reminders about my case, such as letters to approve and response deadlines. Message frequency varies. Message and data rates may apply. Reply STOP to opt out, HELP for help. Not required to use the service.</span></label>
           <button className="btn accent big" type="submit">Continue</button>
           <p className="fine" style={{ marginTop: 14, marginBottom: 0 }}>We store only the last 4 digits of your Social Security number.</p>
         </form>

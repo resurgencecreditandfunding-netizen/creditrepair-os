@@ -37,14 +37,15 @@ export const brandOf = (client: Row): Brand => { const t = getTenant(client.tena
 
 export interface NewClient {
   tenant: string; name: string; email: string; phone: string; address: string; city: string; state: string;
-  zip: string; dob: string; ssnLast4: string; businessStage: string; fundingGoal: string;
+  zip: string; dob: string; ssnLast4: string; businessStage: string; fundingGoal: string; smsOptIn?: boolean;
 }
 export function createClient(c: NewClient) {
   const id = randomUUID();
   db().prepare(`INSERT INTO clients (id, tenant_id, name, email, phone, address, city, state, zip, dob, ssn_last4, business_stage, funding_goal, created_at)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(id, getTenant(c.tenant).id, c.name, c.email, c.phone, c.address, c.city,
     c.state, c.zip, c.dob, c.ssnLast4, c.businessStage, c.fundingGoal, now());
-  log(id, "consumer", "account_created", { businessStage: c.businessStage });
+  if (c.smsOptIn && c.phone) db().prepare("UPDATE clients SET sms_opt_in_at = ? WHERE id = ?").run(now(), id);
+  log(id, "consumer", "account_created", { businessStage: c.businessStage, textOptIn: !!(c.smsOptIn && c.phone) });
   return id;
 }
 export const getClient = (id: string) => db().prepare("SELECT * FROM clients WHERE id = ?").get(id) as Row | undefined;
@@ -207,11 +208,7 @@ export function buildRound(clientId: string): number {
     if (c.status === "pending_letter" && c.round === 1 && !c.last_mailed_at && !grouped.has(key)) d.prepare("DELETE FROM cases WHERE id=?").run(c.id);
   }
 
-  // One open letter per bureau or company at a time: a second dispute while one is pending invites a "duplicate" dismissal.
-  const recipientOf = (c: Row) => c.step === "FURNISHER_DIRECT" ? `furnisher|${c.furnisher}` : `cra|${c.bureau}`;
-  const busy = new Set((d.prepare("SELECT recipient_type, recipient_name, recipient_bureau FROM letters WHERE client_id = ? AND status IN ('draft','attested','mailed')").all(clientId) as Row[])
-    .map((l) => l.recipient_type === "cra" ? `cra|${l.recipient_bureau}` : `furnisher|${l.recipient_name}`));
-  const pending = getCases(clientId).filter((c) => c.status === "pending_letter" && !busy.has(recipientOf(c)));
+  const pending = draftableCases(clientId);
   const groups = new Map<string, typeof pending>();
   for (const c of pending) {
     const k = `${recipientOf(c)}|${c.step}`;
@@ -245,6 +242,15 @@ export function buildRound(clientId: string): number {
     log(clientId, "system", "letter_drafted", { letterId: id, recipient: recipientName, step, items: cases.length });
   }
   return batches.size;
+}
+
+// One open letter per bureau or company at a time: a second dispute while one is pending invites a "duplicate" dismissal.
+const recipientOf = (c: Row) => c.step === "FURNISHER_DIRECT" ? `furnisher|${c.furnisher}` : `cra|${c.bureau}`;
+/** Cases waiting for a letter whose bureau or company has no letter open right now. */
+export function draftableCases(clientId: string) {
+  const busy = new Set((db().prepare("SELECT recipient_type, recipient_name, recipient_bureau FROM letters WHERE client_id = ? AND status IN ('draft','attested','mailed')").all(clientId) as Row[])
+    .map((l) => l.recipient_type === "cra" ? `cra|${l.recipient_bureau}` : `furnisher|${l.recipient_name}`));
+  return getCases(clientId).filter((c) => c.status === "pending_letter" && !busy.has(recipientOf(c)));
 }
 
 export const ATTESTATION =

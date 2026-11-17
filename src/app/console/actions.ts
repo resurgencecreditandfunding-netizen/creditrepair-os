@@ -197,3 +197,10 @@ export async function removeFreezeBureau(f: FormData) {
   try { (await import("@/lib/freeze")).removeFreezeBureau(op, s(f, "id")); } catch (e) { back("/console/settings", "error", message(e)); }
   back("/console/settings", "ok", "Bureau removed from the freeze step.");
 }
+
+export async function runRemindersNow() {
+  const op = await requireOperator();
+  if (!ops.isPlatform(op)) back("/console", "error", "Only the platform owner can do this.");
+  const r = await (await import("@/lib/reminders")).runReminders();
+  back("/console/admin", "ok", r.skipped ? `Reminders not sent: ${r.skipped}.` : `Checked ${r.checked} clients. Sent ${r.sent} reminder${r.sent === 1 ? "" : "s"}${r.failed ? `, ${r.failed} failed` : ""}.`);
+}

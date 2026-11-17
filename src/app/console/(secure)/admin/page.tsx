@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { compCompany, editCompany, opFundingHandled, signOutOperator, suspendCompany } from "@/app/console/actions";
+import { compCompany, editCompany, opFundingHandled, runRemindersNow, signOutOperator, suspendCompany } from "@/app/console/actions";
 import { ConsoleBar, Flash } from "@/components/ui";
 import { businessOverview } from "@/lib/admin";
 import { billingConfigured, PLAN_MONTHLY } from "@/lib/billing";
@@ -51,6 +51,11 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
             {setup.map(([label, ok]) => <span key={label} className={`pill ${ok ? "dark" : "accent"}`} style={{ marginRight: 6 }}>{ok ? "✓" : "✗"} {label}</span>)}
           </div>
         )}
+
+        <form action={runRemindersNow} className="row small muted" style={{ marginBottom: 16 }}>
+          <span>Client reminders run every hour between noon and 8pm Eastern.</span>
+          <button className="btn link" type="submit">Run reminders now</button>
+        </form>
 
         <h2>Revenue</h2>
         <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>

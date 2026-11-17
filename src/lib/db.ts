@@ -65,6 +65,10 @@ CREATE TABLE IF NOT EXISTS freezes (
 CREATE TABLE IF NOT EXISTS login_tokens (
   token_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, expires_at TEXT NOT NULL, used_at TEXT, created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS reminders (
+  client_id TEXT NOT NULL, step_key TEXT NOT NULL, first_seen_at TEXT NOT NULL, last_sent_at TEXT, count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (client_id, step_key)
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL
@@ -132,7 +136,7 @@ export function db(): DatabaseSync {
   // Carry the earlier placeholder product name forward on databases created before the name was chosen.
   d.prepare("UPDATE tenants SET name = ? WHERE id = 'tenant_default' AND name = 'CreditOS'").run(process.env.BRAND_NAME ?? "Leverage IQ");
   seedAdmin(d);
-  for (const col of ["report_reviewed_at TEXT", "freeze_done_at TEXT"]) {
+  for (const col of ["report_reviewed_at TEXT", "freeze_done_at TEXT", "sms_opt_in_at TEXT", "reminders_off INTEGER NOT NULL DEFAULT 0"]) {
     try { d.exec(`ALTER TABLE clients ADD COLUMN ${col}`); } catch { /* column already exists */ }
   }
   seedMonitoring(d);

@@ -24,7 +24,7 @@ export async function startOnboarding(f: FormData) {
   const id = store.createClient({
     tenant: s(f, "tenant") || "default", name: s(f, "name"), email: s(f, "email"), phone: s(f, "phone"),
     address: s(f, "address"), city: s(f, "city"), state: s(f, "state").toUpperCase(), zip: s(f, "zip"),
-    dob: s(f, "dob"), ssnLast4: s(f, "ssnLast4"), businessStage: s(f, "businessStage"), fundingGoal: s(f, "fundingGoal"),
+    dob: s(f, "dob"), ssnLast4: s(f, "ssnLast4"), businessStage: s(f, "businessStage"), fundingGoal: s(f, "fundingGoal"), smsOptIn: f.get("smsOptIn") === "on",
   });
   await startSession(id);
   redirect("/start/disclosure");
@@ -42,6 +42,7 @@ export async function signAll() {
   if (!c) redirect("/start");
   store.signContract(c.id, c.name, await requestMeta());
   void notify.clientSigned(c.id); // sent in the background; a failed alert never blocks the sign-up
+  void import("@/lib/reminders").then((r) => r.welcome(c.id));
   redirect("/dashboard");
 }
 
@@ -186,4 +187,11 @@ export async function completeSignIn(f: FormData) {
   if (!id) back("/login", "error", "That link has expired or was already used. Request a new one.");
   await startSession(id!);
   redirect("/dashboard");
+}
+
+export async function setReminderPrefs(f: FormData) {
+  const c = await requireClient();
+  const { setPrefs } = await import("@/lib/reminders");
+  setPrefs(c.id, { reminders: f.get("reminders") === "on", texts: f.get("texts") === "on" });
+  back("/documents", "ok", "Reminder settings saved.");
 }
