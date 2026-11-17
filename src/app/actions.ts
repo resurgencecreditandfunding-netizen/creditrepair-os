@@ -139,7 +139,8 @@ export async function saveOutcome(f: FormData) {
 export async function requestFunding(f: FormData) {
   const c = await requireClient();
   if (freeze.freezeProgress(c).frozen > 0 && f.get("lifted") !== "on") back("/funding", "error", "Confirm that you have lifted your freezes first. Lenders cannot see a frozen report.");
-  store.log(c.id, "consumer", "funding_review_requested", { goal: c.funding_goal });
+  const { requestDeal } = await import("@/lib/funding-deals");
+  if (requestDeal(c).created) void notify.fundingRequested(c.id);
   back("/funding", "ok", "Request received. Funding options are optional and you are under no obligation.");
 }
 export async function cancel() {

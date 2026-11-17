@@ -73,6 +73,11 @@ CREATE TABLE IF NOT EXISTS documents (
   id TEXT PRIMARY KEY, client_id TEXT NOT NULL, letter_id TEXT, kind TEXT NOT NULL, filename TEXT NOT NULL,
   mime TEXT NOT NULL, size INTEGER NOT NULL, path TEXT NOT NULL, meta TEXT, created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS funding_deals (
+  id TEXT PRIMARY KEY, client_id TEXT NOT NULL, tenant_id TEXT NOT NULL, status TEXT NOT NULL, goal TEXT,
+  lender TEXT, product TEXT, funded_amount REAL, commission REAL, share_pct REAL, share_amount REAL, share_paid_at TEXT,
+  notes TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL
@@ -126,7 +131,7 @@ export function db(): DatabaseSync {
   d.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   d.exec(SCHEMA);
   for (const col of ["legal_name TEXT", "sub_status TEXT NOT NULL DEFAULT 'exempt'", "stripe_customer_id TEXT", "stripe_subscription_id TEXT", "created_at TEXT", "suspended INTEGER NOT NULL DEFAULT 0",
-    "notify_email TEXT", "notify_phone TEXT", "notify_all INTEGER NOT NULL DEFAULT 1"]) {
+    "notify_email TEXT", "notify_phone TEXT", "notify_all INTEGER NOT NULL DEFAULT 1", "funding_share_pct REAL"]) {
     try { d.exec(`ALTER TABLE tenants ADD COLUMN ${col}`); } catch { /* column already exists */ }
   }
   // The platform's own tenant. BRAND_NAME is the product name; LEGAL_NAME is the contracting company.

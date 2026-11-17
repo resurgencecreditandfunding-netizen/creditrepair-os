@@ -33,7 +33,11 @@ export function getTenant(slugOrId: string): Row {
   return (d.prepare("SELECT * FROM tenants WHERE slug = ? OR id = ?").get(slugOrId, slugOrId)
     ?? d.prepare("SELECT * FROM tenants WHERE slug = 'default'").get()) as Row;
 }
-export const brandOf = (client: Row): Brand => { const t = getTenant(client.tenant_id); return { name: t.name, address: t.address, legalName: t.legal_name }; };
+export const brandOf = (client: Row): Brand => {
+  const t = getTenant(client.tenant_id);
+  const platform = t.id === "tenant_default" ? null : (getTenant("tenant_default").legal_name as string | null);
+  return { name: t.name, address: t.address, legalName: t.legal_name, platform };
+};
 
 export interface NewClient {
   tenant: string; name: string; email: string; phone: string; address: string; city: string; state: string;

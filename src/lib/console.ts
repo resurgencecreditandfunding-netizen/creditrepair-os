@@ -34,7 +34,7 @@ export const isPlatform = (op: Operator) => op.role === "platform";
 export const canManage = (op: Operator) => op.role === "platform" || op.role === "admin";
 
 // ---------- tenants ----------
-export interface TenantInfo { id: string; slug: string; name: string; address: string; kind: string; legal_name: string | null; sub_status: string; clients: number; operators: Row[] }
+export interface TenantInfo { id: string; slug: string; name: string; address: string; kind: string; legal_name: string | null; sub_status: string; funding_share_pct: number | null; clients: number; operators: Row[] }
 export function listTenants(op: Operator): TenantInfo[] {
   const d = db();
   const rows = (isPlatform(op) ? d.prepare("SELECT * FROM tenants ORDER BY name").all() : d.prepare("SELECT * FROM tenants WHERE id = ?").all(op.tenant_id)) as Row[];
@@ -77,8 +77,7 @@ export function summarize(c: Row) {
   const letters = store.getLetters(c.id) as Row[];
   const funding = fundingStatus(first, latest, today());
   const log = store.getLog(c.id);
-  const requestedAt = log.find((e) => e.action === "funding_review_requested")?.at as string | undefined;
-  const handledAt = log.find((e) => e.action === "funding_review_handled")?.at as string | undefined;
+  const deal = db().prepare("SELECT status FROM funding_deals WHERE client_id = ? ORDER BY created_at DESC LIMIT 1").get(c.id) as Row | undefined;
   const count = (st: string) => letters.filter((l) => l.status === st).length;
   const mailed = letters.filter((l) => l.status === "mailed");
   const nextDue = mailed.map((l) => l.due_at as string).sort()[0] ?? null;
@@ -101,7 +100,8 @@ export function summarize(c: Row) {
     gain: funding.gain, fundingOpen: funding.unlocked, open, resolved, pending,
     drafts: count("draft"), toMail: count("attested"), mailed: mailed.length, nextDue,
     overdue: mailed.filter((l) => l.due_at < today()).length,
-    fundingRequested: !!requestedAt && (!handledAt || handledAt < requestedAt),
+    fundingRequested: deal?.status === "requested",
+    fundingStage: (deal?.status ?? null) as string | null,
     letters,
   };
 }
@@ -123,6 +123,7 @@ export function addNote(op: Operator, clientId: string, text: string) {
 }
 export function markFundingHandled(op: Operator, clientId: string) {
   clientFor(op, clientId);
+  db().prepare("UPDATE funding_deals SET status = 'in_review', updated_at = ? WHERE client_id = ? AND status = 'requested'").run(new Date().toISOString(), clientId);
   store.log(clientId, `operator:${op.email}`, "funding_review_handled");
 }
 

@@ -225,3 +225,28 @@ export async function opConfirmReply(f: FormData) {
   try { n = confirmSuggestions(clientId, s(f, "id"), filesFor(clientId, s(f, "id")), actor(op)); } catch (e) { back(lp, "error", message(e)); }
   back(lp, "ok", `${n} result${n === 1 ? "" : "s"} recorded.`);
 }
+
+// ---------- funding pipeline ----------
+const num = (v: string) => (v.trim() === "" ? null : Number(v.replace(/[$,\s]/g, "")));
+export async function saveDeal(f: FormData) {
+  const op = await requireOperator();
+  const fd = await import("@/lib/funding-deals");
+  try {
+    fd.updateDeal(op, s(f, "id"), { status: s(f, "status") as import("@/lib/funding-deals").DealStatus, lender: s(f, "lender"), product: s(f, "product"), fundedAmount: num(s(f, "funded")), commission: num(s(f, "commission")), notes: s(f, "notes") });
+  } catch (e) { back("/console/funding", "error", message(e)); }
+  back("/console/funding", "ok", "Deal saved.");
+}
+export async function paySharePaid(f: FormData) {
+  const op = await requireOperator();
+  try { (await import("@/lib/funding-deals")).markSharePaid(op, s(f, "id")); } catch (e) { back("/console/funding", "error", message(e)); }
+  back("/console/funding", "ok", "Payout recorded.");
+}
+export async function saveShares(f: FormData) {
+  const op = await requireOperator();
+  const fd = await import("@/lib/funding-deals");
+  try {
+    fd.setDefaultShare(op, Number(s(f, "default")));
+    for (const [k, v] of f.entries()) if (k.startsWith("t_")) fd.setCompanyShare(op, k.slice(2), num(String(v)));
+  } catch (e) { back("/console/funding", "error", message(e)); }
+  back("/console/funding", "ok", "Revenue share saved. It applies to deals marked funded from now on.");
+}

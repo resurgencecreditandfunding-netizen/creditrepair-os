@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-export interface Brand { name: string; address: string; legalName?: string | null }
+export interface Brand { name: string; address: string; legalName?: string | null; /** The platform company, when the client signs with a licensed operator. */ platform?: string | null }
 /** The company that is party to the contract. The product name is shown only as the service name. */
 const party = (b: Brand) => b.legalName && b.legalName !== b.name ? `${b.legalName} (which provides this service under the name ${b.name})` : b.name;
 const co = (b: Brand) => b.legalName || b.name;
@@ -87,7 +87,7 @@ Signature: ____________________`),
 This authorization does not let us sign contracts for you, apply for credit for you, or speak to anyone as if we were you. You can revoke it at any time by cancelling.`),
 
     doc("funding_disclosure", "How We Are Paid, and Your Funding Options",
-`The credit services are free. ${co(b)} is paid only if you later choose a financing product through us. In that case the lender or partner may pay us a fee or commission, and we will tell you about that compensation before you apply.
+`The credit services are free. ${co(b)} is paid only if you later choose a financing product through us. In that case the lender or partner may pay us a fee or commission, and we will tell you about that compensation before you apply.${b.platform ? ` Funding is arranged through our platform partner, ${b.platform}, which may receive a fee or commission from the lender and may share part of it with ${co(b)}.` : ""}
 
 You are never required to apply for, or accept, any financing. Choosing not to seek funding does not affect your credit services and creates no charge.
 

@@ -19,7 +19,7 @@ beforeAll(async () => {
   const c = store.createClient(person("smith-tax", "Jordan")); store.createClient(person("default", "Dana"));
   store.log(c, "consumer", "monitoring_link_opened", { service: "MyFreeScoreNow" });
   store.log(c, "consumer", "monitoring_link_opened", { service: "MyFreeScoreNow" });
-  store.log(c, "consumer", "funding_review_requested");
+  (await import("@/lib/funding-deals")).requestDeal(store.getClient(c)!);
 });
 
 describe("business overview", () => {

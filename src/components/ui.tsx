@@ -32,8 +32,8 @@ export function Flash({ error, ok }: { error?: string; ok?: string }) {
 
 export function ConsoleBar({ active, name, signOut, owner }: { active?: string; name: string; signOut: () => Promise<void>; owner?: boolean }) {
   const items = owner
-    ? [["admin", "Business"], ["", "Clients"], ["settings", "Companies and logins"]]
-    : [["", "Clients"], ["settings", "Companies and logins"], ["billing", "Billing"]];
+    ? [["admin", "Business"], ["", "Clients"], ["funding", "Funding"], ["settings", "Companies and logins"]]
+    : [["", "Clients"], ["funding", "Funding"], ["settings", "Companies and logins"], ["billing", "Billing"]];
   return (
     <header className="topbar">
       <div className="topbar-in">

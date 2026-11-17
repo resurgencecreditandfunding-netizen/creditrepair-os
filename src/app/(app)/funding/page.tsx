@@ -3,6 +3,7 @@ import { Flash, TopBar } from "@/components/ui";
 import { today } from "@/lib/dates";
 import { fundingStatus, FUNDING_RULES } from "@/lib/funding";
 import { freezeProgress } from "@/lib/freeze";
+import { DEAL_STATUS, dealsFor, openDeal } from "@/lib/funding-deals";
 import { requireClient } from "@/lib/session";
 import * as store from "@/lib/store";
 
@@ -12,7 +13,8 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
   const reports = store.getReports(c.id);
   const f = fundingStatus(reports[0] ?? null, reports.at(-1) ?? null, today());
   const frozen = freezeProgress(c).list.filter((x) => x.status === "frozen");
-  const requested = store.getLog(c.id).some((e) => e.action === "funding_review_requested");
+  const deals = dealsFor(c.id);
+  const requested = !!openDeal(c.id);
   return (
     <>
       <TopBar brand={store.brandOf(c).name} active="funding" />
@@ -38,7 +40,7 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
           <div className="card">
             <h2>You are ready for a funding review</h2>
             <p>We compare your profile with credit union and lender requirements and show you the options you are likely to qualify for. Seeking funding is optional. We are paid by the lender only if you choose a product, and we tell you about that compensation before you apply.</p>
-            {requested ? <span className="pill dark">Funding review requested</span> : (
+            {requested ? <p><span className="pill dark">{DEAL_STATUS[openDeal(c.id)!.status as keyof typeof DEAL_STATUS]}</span> <span className="small muted">We will contact you about your options.</span></p> : (
               <form action={requestFunding}>
                 {frozen.length > 0 && (
                   <div className="notice">
@@ -51,6 +53,16 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
               </form>
             )}
             <p className="fine" style={{ marginTop: 14, marginBottom: 0 }}>No approval, amount, or terms are guaranteed. Every application must be truthful and complete.</p>
+          </div>
+        )}
+
+        {deals.length > 0 && (
+          <div className="card">
+            <h2>Your funding history</h2>
+            <table><tbody>{deals.map((d) => (
+              <tr key={d.id}><td className="small">{new Date(d.created_at).toLocaleDateString("en-US")}</td><td><span className="pill">{DEAL_STATUS[d.status as keyof typeof DEAL_STATUS]}</span></td>
+                <td className="small">{d.lender ?? ""}{d.product ? ` · ${d.product}` : ""}</td><td>{d.funded_amount ? `$${Number(d.funded_amount).toLocaleString("en-US")}` : ""}</td></tr>
+            ))}</tbody></table>
           </div>
         )}
 

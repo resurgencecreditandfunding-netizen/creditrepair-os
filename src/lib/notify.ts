@@ -135,3 +135,21 @@ export async function sendTestAlert(tenantId: string) {
   if (!out.attempted) throw new Error(r.email && !emailConfigured() ? "Email alerts are not switched on yet; only text is." : "Text alerts are not switched on yet; only email is.");
   if (out.failed) throw new Error("The test did not go through. The error is in the activity log on the Business page.");
 }
+
+/** A client asked for a funding review: always tells the owner, who runs funding, and the client's company. */
+export async function fundingRequested(clientId: string) {
+  try {
+    const d = db();
+    const c = d.prepare("SELECT * FROM clients WHERE id = ?").get(clientId) as Row;
+    const t = d.prepare("SELECT * FROM tenants WHERE id = ?").get(c.tenant_id) as Row;
+    const owner = recipientOf(d.prepare("SELECT * FROM tenants WHERE id = 'tenant_default'").get() as Row, "owner");
+    const company = c.tenant_id !== "tenant_default" ? recipientOf(t, "company") : null;
+    const to = [company, owner].filter((x): x is Recipient => !!x);
+    const label = c.tenant_id === "tenant_default" ? "direct" : t.name;
+    await deliver(to, {
+      subject: `Funding request: ${c.name} (${label})`,
+      text: `${c.name} asked for a funding review.\n\nEmail: ${c.email}\nPhone: ${c.phone || "not given"}\nFunding goal: ${c.funding_goal || "not given"}${site() ? `\n\nFunding pipeline: ${site()}/console/funding` : ""}`,
+      sms: `${PRODUCT}: funding request from ${c.name} (${label}).`,
+    }, clientId);
+  } catch (e) { console.error("[alerts]", e); }
+}

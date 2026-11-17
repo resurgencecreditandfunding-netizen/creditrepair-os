@@ -58,9 +58,10 @@ describe("company isolation", () => {
 
 describe("contracts name the right company", () => {
   it("uses the licensed company's legal name for its clients", () => {
-    const text = docs.contractDocs(store.brandOf(store.getClient(clientA)!), "x").map((d) => d.body).join("\n");
-    expect(text).toContain("Smith Tax Services LLC (which provides this service under the name Smith Tax)");
-    expect(text).not.toContain("Resurgence");
+    const all = docs.contractDocs(store.brandOf(store.getClient(clientA)!), "x");
+    expect(all.map((d) => d.body).join("\n")).toContain("Smith Tax Services LLC (which provides this service under the name Smith Tax)");
+    // the platform company appears only where funding is disclosed
+    expect(all.filter((d) => d.body.includes("Resurgence")).map((d) => d.key)).toEqual(["funding_disclosure"]);
   });
   it("uses Resurgence Consulting Services Incorporated for direct clients, not the product name", () => {
     const direct = store.createClient(person("default", "Dana Cole"));
@@ -89,8 +90,8 @@ describe("client summary and queue", () => {
     expect(ops.summarize(store.getClient(clientA)!).overdue).toBe(1);
     expect(store.getLog(clientA).find((e) => e.action === "letter_mailed")!.actor).toBe("operator:a@smith.example");
   });
-  it("raises and clears a funding request", () => {
-    store.log(clientA, "consumer", "funding_review_requested");
+  it("raises and clears a funding request", async () => {
+    (await import("@/lib/funding-deals")).requestDeal(store.getClient(clientA)!);
     expect(ops.summarize(store.getClient(clientA)!).fundingRequested).toBe(true);
     ops.markFundingHandled(staffA, clientA);
     expect(ops.summarize(store.getClient(clientA)!).fundingRequested).toBe(false);
