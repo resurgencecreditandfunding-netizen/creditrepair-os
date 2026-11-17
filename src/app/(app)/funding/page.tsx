@@ -2,6 +2,7 @@ import { requestFunding } from "@/app/actions";
 import { Flash, TopBar } from "@/components/ui";
 import { today } from "@/lib/dates";
 import { fundingStatus, FUNDING_RULES } from "@/lib/funding";
+import { freezeProgress } from "@/lib/freeze";
 import { requireClient } from "@/lib/session";
 import * as store from "@/lib/store";
 
@@ -10,6 +11,7 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
   const sp = await searchParams;
   const reports = store.getReports(c.id);
   const f = fundingStatus(reports[0] ?? null, reports.at(-1) ?? null, today());
+  const frozen = freezeProgress(c).list.filter((x) => x.status === "frozen");
   const requested = store.getLog(c.id).some((e) => e.action === "funding_review_requested");
   return (
     <>
@@ -37,7 +39,16 @@ export default async function Funding({ searchParams }: { searchParams: Promise<
             <h2>You are ready for a funding review</h2>
             <p>We compare your profile with credit union and lender requirements and show you the options you are likely to qualify for. Seeking funding is optional. We are paid by the lender only if you choose a product, and we tell you about that compensation before you apply.</p>
             {requested ? <span className="pill dark">Funding review requested</span> : (
-              <form action={requestFunding}><button className="btn accent big" type="submit">Request my funding review</button></form>
+              <form action={requestFunding}>
+                {frozen.length > 0 && (
+                  <div className="notice">
+                    <strong>Lift your freezes first.</strong> Lenders check some of these reports, and a frozen report can mean an automatic denial. Lift (or temporarily thaw) each one on its own site:
+                    <ul className="small" style={{ margin: "8px 0" }}>{frozen.map((x) => <li key={x.bureau.id}><a href={x.bureau.url} target="_blank" rel="noopener">{x.bureau.name} ↗</a></li>)}</ul>
+                    <label className="check"><input type="checkbox" name="lifted" required /><span>I have lifted, or scheduled a temporary lift of, the freezes I placed.</span></label>
+                  </div>
+                )}
+                <button className="btn accent big" type="submit">Request my funding review</button>
+              </form>
             )}
             <p className="fine" style={{ marginTop: 14, marginBottom: 0 }}>No approval, amount, or terms are guaranteed. Every application must be truthful and complete.</p>
           </div>

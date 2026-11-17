@@ -1,5 +1,8 @@
 import { headers } from "next/headers";
-import { addMonitoringService, addOperator, addTenant, removeLogin, removeMonitoringService, resetLoginPassword, signOutOperator } from "@/app/console/actions";
+import { addFreezeBureau, addMonitoringService, addOperator, addTenant, removeFreezeBureau, removeLogin, removeMonitoringService, resetLoginPassword, saveAlerts, signOutOperator, testAlerts } from "@/app/console/actions";
+import { listFreezeBureaus } from "@/lib/freeze";
+import { emailConfigured, smsConfigured } from "@/lib/notify";
+import { getTenant } from "@/lib/store";
 import { ConsoleBar, Flash } from "@/components/ui";
 import * as ops from "@/lib/console";
 import { requireOperator } from "@/lib/opsession";
@@ -12,6 +15,8 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const tenants = ops.listTenants(op);
   const partners = ops.listMonitoring();
+  const freezeList = listFreezeBureaus();
+  const mine = getTenant(op.tenant_id);
   const h = await headers();
   const origin = `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
   return (
@@ -21,6 +26,28 @@ export default async function Settings({ searchParams }: { searchParams: Promise
         <h1>Companies and logins</h1>
         <p className="muted">Each company has its own clients, its own name on the contract, and its own sign-up link.</p>
         <Flash {...sp} />
+
+        {ops.canManage(op) && (
+          <div className="card">
+            <h2>Sign-up alerts</h2>
+            <p className="small muted">
+              {ops.isPlatform(op) ? "Get an email or text when someone signs up, and when a company joins or starts paying." : "Get an email or text the moment one of your clients signs their agreement."}
+              {" "}Email is {emailConfigured() ? <strong>on</strong> : <strong style={{ color: "var(--accent-dark)" }}>not switched on yet</strong>}. Text is {smsConfigured() ? <strong>on</strong> : <strong style={{ color: "var(--accent-dark)" }}>not switched on yet</strong>}.
+            </p>
+            <form action={saveAlerts} className="row" style={{ alignItems: "flex-end" }}>
+              <div style={{ flex: "2 1 220px" }}><label htmlFor="aemail">Email</label><input id="aemail" name="email" type="email" defaultValue={mine.notify_email ?? ""} /></div>
+              <div style={{ flex: "1 1 160px" }}><label htmlFor="aphone">Mobile (US)</label><input id="aphone" name="phone" type="tel" defaultValue={mine.notify_phone ?? ""} placeholder="(386) 555-0123" /></div>
+              {ops.isPlatform(op) && (
+                <div style={{ flex: "1 1 200px" }}><label htmlFor="ascope">Client sign-ups</label>
+                  <select id="ascope" name="scope" defaultValue={mine.notify_all ? "all" : "direct"}>
+                    <option value="all">Every company</option><option value="direct">Only my own clients</option>
+                  </select></div>
+              )}
+              <button className="btn dark" type="submit">Save</button>
+            </form>
+            <form action={testAlerts} style={{ marginTop: 10 }}><button className="btn link" type="submit">Send a test alert</button></form>
+          </div>
+        )}
 
         {tenants.map((t) => (
           <div className="card" key={t.id}>
@@ -71,6 +98,25 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <div style={{ flex: "2 1 220px" }}><label htmlFor="mblurb">Short description (optional)</label><input id="mblurb" name="blurb" type="text" maxLength={80} placeholder="3-bureau report, $1 trial" /></div>
               <button className="btn dark" type="submit">Add partner</button>
             </form>
+          </div>
+        )}
+
+        {ops.isPlatform(op) && (
+          <div className="card">
+            <h2>Secondary bureaus (freeze step)</h2>
+            <p className="small muted">Every client freezes each of these before letters are prepared. Check each link opens the company's freeze page, and replace home-page links with the direct freeze page when you have it.</p>
+            <div className="tablewrap"><table><tbody>{freezeList.map((b) => (
+              <tr key={b.id}><td><strong>{b.name}</strong><div className="small muted">{b.note}</div></td>
+                <td className="small" style={{ wordBreak: "break-all" }}><a href={b.url} target="_blank" rel="noopener">{b.url}</a></td>
+                <td><form action={removeFreezeBureau}><input type="hidden" name="id" value={b.id} /><button className="btn link" type="submit">Remove</button></form></td></tr>
+            ))}</tbody></table></div>
+            <form action={addFreezeBureau} className="row" style={{ alignItems: "flex-end", marginTop: 12 }}>
+              <div style={{ flex: "1 1 160px" }}><label htmlFor="fname">Bureau</label><input id="fname" name="name" type="text" required /></div>
+              <div style={{ flex: "2 1 240px" }}><label htmlFor="furl">Freeze page link</label><input id="furl" name="url" type="text" required placeholder="https://" /></div>
+              <div style={{ flex: "2 1 220px" }}><label htmlFor="fnote">Note for clients (optional)</label><input id="fnote" name="note" type="text" maxLength={140} /></div>
+              <button className="btn dark" type="submit">Add bureau</button>
+            </form>
+            <p className="fine" style={{ margin: "10px 0 0" }}>To change a link, add the bureau again with the new link, then remove the old one. Clients who already finished this step are not asked again.</p>
           </div>
         )}
 

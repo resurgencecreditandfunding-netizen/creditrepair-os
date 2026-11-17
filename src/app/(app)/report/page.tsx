@@ -1,4 +1,5 @@
-import { clearItem, loadSample, stateItem, uploadReport } from "@/app/actions";
+import { clearItem, loadSample, reviewDone, stateItem, uploadReport } from "@/app/actions";
+import Link from "next/link";
 import { Flash, TopBar } from "@/components/ui";
 import { aiEnabled } from "@/lib/ai";
 import { listMonitoring } from "@/lib/console";
@@ -185,6 +186,17 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
                     }))}
                 </div>
               ))}
+            </div>
+            <div className="card" style={{ marginTop: 24, borderColor: c.report_reviewed_at ? undefined : "var(--accent)" }}>
+              {c.report_reviewed_at ? (
+                <div className="row between"><span><span className="pill dark">Reviewed</span> <span className="small muted">You can still change any item above until your letters are prepared.</span></span>
+                  <Link className="btn" href="/freeze">Go to the freeze step</Link></div>
+              ) : (
+                <form action={reviewDone} className="row between">
+                  <span><strong>Finished reviewing?</strong> <span className="small muted">Confirm you have checked every item. Next you'll freeze the secondary bureaus.</span></span>
+                  <button className="btn accent" type="submit">I've reviewed my report</button>
+                </form>
+              )}
             </div>
           </>
         )}

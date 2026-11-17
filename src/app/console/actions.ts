@@ -127,6 +127,7 @@ export async function registerCompany(f: FormData) {
   try {
     made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password") });
   } catch (e) { return back("/console/signup", "error", message(e)); }
+  void (await import("@/lib/notify")).operatorEvent(made.tenantId, "registered");
   await startOpSession(made.operatorId);
   redirect("/console/billing");
 }
@@ -168,4 +169,31 @@ export async function resetLoginPassword(f: FormData) {
 }
 export async function removeLogin(f: FormData) {
   await adminAction("/console/settings", "Login removed.", (op, a) => a.removeLogin(op, s(f, "id")));
+}
+
+// ---------- sign-up alerts and the freeze list ----------
+export async function saveAlerts(f: FormData) {
+  const op = await requireOperator();
+  if (!ops.canManage(op)) back("/console/settings", "error", "Ask your company admin to change alerts.");
+  const n = await import("@/lib/notify");
+  try { n.setAlertSettings(op.tenant_id, { email: s(f, "email"), phone: s(f, "phone"), all: ops.isPlatform(op) ? s(f, "scope") !== "direct" : undefined }); }
+  catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Alert settings saved.");
+}
+export async function testAlerts() {
+  const op = await requireOperator();
+  const n = await import("@/lib/notify");
+  try { await n.sendTestAlert(op.tenant_id); } catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Test alert sent. Check your email and phone.");
+}
+export async function addFreezeBureau(f: FormData) {
+  const op = await requireOperator();
+  try { (await import("@/lib/freeze")).addFreezeBureau(op, { name: s(f, "name"), url: s(f, "url"), note: s(f, "note") }); }
+  catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Bureau added to the freeze step.");
+}
+export async function removeFreezeBureau(f: FormData) {
+  const op = await requireOperator();
+  try { (await import("@/lib/freeze")).removeFreezeBureau(op, s(f, "id")); } catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Bureau removed from the freeze step.");
 }

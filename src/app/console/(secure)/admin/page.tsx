@@ -9,6 +9,7 @@ import { fmt } from "@/lib/dates";
 import { requireOperator } from "@/lib/opsession";
 import { aiEnabled } from "@/lib/ai";
 import { DEMO } from "@/lib/store";
+import { emailConfigured, smsConfigured } from "@/lib/notify";
 
 const SUB: Record<string, [string, string]> = {
   active: ["Paying", "dark"], trialing: ["Trial", ""], past_due: ["Payment overdue", "accent"], pending: ["Signed up, not paid", "accent"],
@@ -32,6 +33,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   const setup = [
     ["Operator payments (Stripe)", billingConfigured() && !!process.env.STRIPE_WEBHOOK_SECRET],
     ["Report reading (AI key)", aiEnabled()],
+    ["Sign-up alerts (email or text)", emailConfigured() || smsConfigured()],
     ["Demo mode off", !DEMO],
   ] as const;
 

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { demoRefresh } from "@/app/actions";
+import { JourneyMap } from "@/components/JourneyMap";
 import { Flash, TopBar } from "@/components/ui";
+import { journey } from "@/lib/journey";
 import { fmt, today } from "@/lib/dates";
 import { fundingStatus } from "@/lib/funding";
 import { requireClient } from "@/lib/session";
@@ -18,22 +20,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const findings = store.currentFindings(c.id);
   const open = cases.filter((x) => !["resolved", "exhausted"].includes(x.status));
   const resolved = cases.filter((x) => x.status === "resolved");
-  const drafts = letters.filter((l: any) => l.status === "draft");
   const waiting = letters.filter((l: any) => l.status === "mailed");
-  const canServe = store.canServe(c);
 
-  const stage = !latest ? 1 : !cases.length ? 2 : funding.unlocked ? 4 : 3;
-  const steps = ["Signed", "Report connected", "Disputes in rounds", "Funding open"];
-
-  let next: { text: string; href: string; cta: string };
-  if (c.status !== "active") next = { text: "Your services are cancelled.", href: "/documents", cta: "View documents" };
-  else if (!latest) next = { text: "Connect your credit report so we can audit it.", href: "/report", cta: "Connect report" };
-  else if (drafts.length) next = { text: `${drafts.length} letter${drafts.length > 1 ? "s are" : " is"} waiting for your approval.`, href: "/disputes", cta: "Review letters" };
-  else if (!canServe) next = { text: `Your cancellation period runs through ${fmt(store.cancelDeadline(c.signed_at.slice(0, 10)))}. Disputes can begin on ${fmt(store.serviceStartDate(c))}. Review your report in the meantime.`, href: "/report", cta: "Review report" };
-  else if (cases.some((x) => x.status === "pending_letter") || (findings.length && !cases.length)) next = { text: "Items are ready for the next round of letters.", href: "/disputes", cta: "Prepare letters" };
-  else if (waiting.length) next = { text: `Waiting on ${waiting.length} response${waiting.length > 1 ? "s" : ""}. Next deadline: ${fmt(waiting.map((l: any) => l.due_at).sort()[0])}.`, href: "/disputes", cta: "View disputes" };
-  else if (funding.unlocked) next = { text: "Your funding options are open.", href: "/funding", cta: "See funding" };
-  else next = { text: "Review your report and tell us about anything that is wrong.", href: "/report", cta: "Review report" };
+  const map = journey(c);
 
   return (
     <>
@@ -42,13 +31,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <h1>Welcome, {c.name.split(" ")[0]}</h1>
         <p className="muted">Free credit repair, then funding.</p>
         <Flash {...sp} />
-        <ol className="steps">
-          {steps.map((s, i) => <li key={s} className={i < stage ? "done" : i === stage ? "now" : ""}>{s}</li>)}
-        </ol>
-        <div className="notice row between">
-          <span><strong>Next step.</strong> {next.text}</span>
-          <Link className="btn accent" href={next.href}>{next.cta}</Link>
-        </div>
+        {c.status !== "active" && <div className="notice">Your services are cancelled. <Link href="/documents">View your documents</Link>.</div>}
 
         <div className="grid g3">
           {BUREAUS.map((b) => {
@@ -64,7 +47,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           })}
         </div>
 
-        <div className="grid g2" style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 16 }}><JourneyMap {...map} /></div>
+
+        <div className="grid g2">
           <div className="card">
             <h2>Dispute progress</h2>
             <table><tbody>

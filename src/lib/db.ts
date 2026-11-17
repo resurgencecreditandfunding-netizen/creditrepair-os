@@ -55,6 +55,13 @@ CREATE TABLE IF NOT EXISTS monitoring_services (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, blurb TEXT, created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS freeze_bureaus (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, note TEXT, sort INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS freezes (
+  client_id TEXT NOT NULL, bureau_id TEXT NOT NULL, status TEXT NOT NULL, confirmation TEXT, at TEXT NOT NULL,
+  PRIMARY KEY (client_id, bureau_id)
+);
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL
@@ -80,6 +87,24 @@ function seedMonitoring(d: DatabaseSync) {
   d.prepare("INSERT INTO settings (key, value) VALUES ('monitoring_seeded', '1')").run();
 }
 
+/**
+ * Starting list for the secondary-bureau freeze step. Added once; the platform owner edits it in the console.
+ * Only the LexisNexis link goes to a freeze page; the others go to the company's home page until verified deep links are added.
+ */
+function seedFreezeBureaus(d: DatabaseSync) {
+  if (d.prepare("SELECT 1 FROM settings WHERE key = 'freeze_bureaus_seeded'").get()) return;
+  const list: [string, string, string][] = [
+    ["LexisNexis (includes SageStream)", "https://consumer.risk.lexisnexis.com/freeze", "Used by lenders and insurers. One freeze here also covers SageStream."],
+    ["Innovis", "https://www.innovis.com", "The fourth nationwide credit bureau. Look for Security Freeze on their site."],
+    ["ChexSystems", "https://www.chexsystems.com", "Used by banks when you open an account. Lift it before opening a new bank account."],
+    ["NCTUE", "https://www.nctue.com", "Phone, cable and utility payment history. Look for Security Freeze on their site."],
+    ["Clarity Services", "https://www.clarityservices.com", "Owned by Experian. Used by many online lenders. Look for Security Freeze on their site."],
+  ];
+  const ins = d.prepare("INSERT INTO freeze_bureaus (id, name, url, note, sort, created_at) VALUES (?,?,?,?,?,?)");
+  list.forEach(([name, url, note], i) => ins.run(randomUUID(), name, url, note, i, new Date().toISOString()));
+  d.prepare("INSERT INTO settings (key, value) VALUES ('freeze_bureaus_seeded', '1')").run();
+}
+
 const g = globalThis as unknown as { __cfoDb?: DatabaseSync };
 
 export function db(): DatabaseSync {
@@ -89,7 +114,8 @@ export function db(): DatabaseSync {
   const d = new sqlite.DatabaseSync(file);
   d.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   d.exec(SCHEMA);
-  for (const col of ["legal_name TEXT", "sub_status TEXT NOT NULL DEFAULT 'exempt'", "stripe_customer_id TEXT", "stripe_subscription_id TEXT", "created_at TEXT", "suspended INTEGER NOT NULL DEFAULT 0"]) {
+  for (const col of ["legal_name TEXT", "sub_status TEXT NOT NULL DEFAULT 'exempt'", "stripe_customer_id TEXT", "stripe_subscription_id TEXT", "created_at TEXT", "suspended INTEGER NOT NULL DEFAULT 0",
+    "notify_email TEXT", "notify_phone TEXT", "notify_all INTEGER NOT NULL DEFAULT 1"]) {
     try { d.exec(`ALTER TABLE tenants ADD COLUMN ${col}`); } catch { /* column already exists */ }
   }
   // The platform's own tenant. BRAND_NAME is the product name; LEGAL_NAME is the contracting company.
@@ -103,7 +129,11 @@ export function db(): DatabaseSync {
   // Carry the earlier placeholder product name forward on databases created before the name was chosen.
   d.prepare("UPDATE tenants SET name = ? WHERE id = 'tenant_default' AND name = 'CreditOS'").run(process.env.BRAND_NAME ?? "Leverage IQ");
   seedAdmin(d);
+  for (const col of ["report_reviewed_at TEXT", "freeze_done_at TEXT"]) {
+    try { d.exec(`ALTER TABLE clients ADD COLUMN ${col}`); } catch { /* column already exists */ }
+  }
   seedMonitoring(d);
+  seedFreezeBureaus(d);
   g.__cfoDb = d;
   return d;
 }

@@ -6,6 +6,9 @@ import * as ops from "@/lib/console";
 import { fmt, today } from "@/lib/dates";
 import { fundingStatus } from "@/lib/funding";
 import { requireOperator } from "@/lib/opsession";
+import { freezeProgress, letterBlocker } from "@/lib/freeze";
+import { journey } from "@/lib/journey";
+import { JourneyMap } from "@/components/JourneyMap";
 import { groupFindings, STEP_NAME } from "@/lib/rounds";
 import * as store from "@/lib/store";
 import { BUREAU_NAME, BUREAUS } from "@/lib/types";
@@ -31,6 +34,9 @@ export default async function Client({ params, searchParams }: { params: Promise
   const known = new Set(cases.map((x) => `${x.item_type}:${x.item_id}:${x.bureau}`));
   const ready = [...groupFindings(findings).keys()].filter((k) => !known.has(k)).length + sum.pending;
   const canServe = store.canServe(c);
+  const blocker = letterBlocker(c);
+  const fz = freezeProgress(c);
+  const map = journey(c);
   const log = store.getLog(id);
   const Client = () => <input type="hidden" name="clientId" value={id} />;
 
@@ -65,8 +71,13 @@ export default async function Client({ params, searchParams }: { params: Promise
           <div className="card">
             <h2>Next action</h2>
             <p className="small muted">{ready} item{ready === 1 ? "" : "s"} ready for a letter. You can draft letters; only the client can approve them.</p>
+            <p className="small">
+              <span className={`pill ${c.report_reviewed_at ? "dark" : "accent"}`}>{c.report_reviewed_at ? "✓" : "✗"} Report reviewed</span>{" "}
+              <span className={`pill ${fz.complete ? "dark" : "accent"}`}>{fz.complete ? "✓" : "✗"} Freezes {fz.addressed} of {fz.total}</span>
+            </p>
+            {blocker && <p className="small" style={{ color: "var(--accent-dark)" }}>{blocker} Only the client can do this, in their own account.</p>}
             <div className="row">
-              <form action={opPrepareLetters}><Client /><button className="btn accent" type="submit" disabled={!canServe || !ready}>Draft letters</button></form>
+              <form action={opPrepareLetters}><Client /><button className="btn accent" type="submit" disabled={!canServe || !ready || !!blocker}>Draft letters</button></form>
             </div>
             <form action={opUploadReport} className="row" style={{ marginTop: 14 }}>
               <Client />
@@ -90,6 +101,8 @@ export default async function Client({ params, searchParams }: { params: Promise
             ))}</tbody></table>
           </div>
         </div>
+
+        <div style={{ marginTop: 24 }}><JourneyMap {...map} links={false} title="Client journey" /></div>
 
         <h2 style={{ marginTop: 24 }}>Letters</h2>
         <div className="card tablewrap">

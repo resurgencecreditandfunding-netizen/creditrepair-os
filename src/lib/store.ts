@@ -168,6 +168,8 @@ export function getLetter(clientId: string, id: string) { return getLetters(clie
 export function buildRound(clientId: string): number {
   const client = getClient(clientId)!;
   if (!canServe(client)) throw new Error("Services cannot begin until the cancellation period has ended.");
+  if (!client.report_reviewed_at) throw new Error("Review your credit report before letters are prepared.");
+  if (!client.freeze_done_at) throw new Error("Complete the secondary bureau freeze step before letters are prepared.");
   const d = db();
   const report = getReports(clientId).at(-1);
   if (!report) return 0;

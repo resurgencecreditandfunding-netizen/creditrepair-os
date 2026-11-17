@@ -29,6 +29,8 @@ npm test
 | `SESSION_SECRET` | Signs the session cookie. Required in production. |
 | `ANTHROPIC_API_KEY` | Required for real use. Reads uploaded reports (PDF or saved HTML) and rewords letters. Without it, only the demo report and JSON uploads work. |
 | `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET` | Operator subscription. The webhook endpoint is `/api/stripe/webhook`; send it `checkout.session.completed`, `customer.subscription.updated` and `customer.subscription.deleted`. |
+| `RESEND_API_KEY`, `NOTIFY_FROM` | Email sign-up alerts through Resend. The sending domain must be verified in Resend. |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` | Text sign-up alerts through Twilio. |
 | `APP_URL` | Public address of the site, used for Stripe return links. |
 | `DATABASE_PATH` | SQLite file. Defaults to `data/app.db`. |
 
@@ -57,6 +59,12 @@ npm test
 ## Owner's business page (`/console/admin`)
 
 Platform owner only, and where the owner lands after sign-in. Shows estimated monthly revenue, operators by payment status, clients and results across every company, open funding requests, credit monitoring link clicks, and latest activity. The owner can suspend or reinstate a company, give free access, and edit a company's contract details. Owners and company admins can reset a staff password or remove a login under Companies and logins.
+
+## Client journey, freeze step and alerts
+
+- The client dashboard shows a 13-step journey map under the scores: done, current (with its action), next and remaining steps. Staff see the same map, without actions, on the client's file.
+- Letters cannot be prepared until the client has reviewed their report and completed the secondary bureau freeze step: each listed bureau marked frozen or skipped. The platform owner edits the bureau list under Companies and logins. The funding request asks the client to confirm they have lifted their freezes.
+- Sign-up alerts go by email and/or text when a client signs: to that client's company, and to the owner (all companies or only direct clients, the owner's choice). The owner is also alerted when a company registers and when it starts paying. Each company sets its alert email and mobile under Companies and logins. Alerts run in the background; a failed alert is logged and never blocks a sign-up.
 
 ## Operator subscription
 

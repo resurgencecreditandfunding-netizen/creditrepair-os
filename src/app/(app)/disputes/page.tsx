@@ -25,6 +25,8 @@ export default async function Disputes({ searchParams }: { searchParams: Promise
   const fresh = [...groupFindings(store.currentFindings(c.id)).keys()].filter((k) => !known.has(k)).length;
   const ready = fresh + cases.filter((x) => x.status === "pending_letter").length;
   const canServe = store.canServe(c);
+  const blocker = !c.report_reviewed_at ? { text: "Review your credit report first.", href: "/report", cta: "Review report" }
+    : !c.freeze_done_at ? { text: "Complete the secondary bureau freeze step before your letters are prepared.", href: "/freeze", cta: "Go to freezes" } : null;
 
   return (
     <>
@@ -37,12 +39,15 @@ export default async function Disputes({ searchParams }: { searchParams: Promise
         {!canServe && c.status === "active" && (
           <div className="notice">Disputes can begin on <strong>{fmt(store.serviceStartDate(c))}</strong>, after your 3-business-day cancellation period ends. This waiting period is required by federal law.</div>
         )}
+        {blocker && c.status === "active" && (
+          <div className="notice row between"><span>{blocker.text}</span><Link className="btn accent" href={blocker.href}>{blocker.cta}</Link></div>
+        )}
         {c.status !== "active" && <div className="notice">Your services are cancelled. No further letters will be prepared.</div>}
 
         <div className="card row between">
           <div><h2 style={{ margin: 0 }}>{ready} item{ready === 1 ? "" : "s"} ready for a letter</h2>
             <div className="small muted">One letter is drafted per bureau or company. Nothing is sent until you approve it.</div></div>
-          <form action={prepareLetters}><button className="btn accent" type="submit" disabled={!canServe || !ready}>Prepare letters</button></form>
+          <form action={prepareLetters}><button className="btn accent" type="submit" disabled={!canServe || !ready || !!blocker}>Prepare letters</button></form>
         </div>
 
         <h2 style={{ marginTop: 24 }}>Letters</h2>

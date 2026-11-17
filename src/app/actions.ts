@@ -6,6 +6,8 @@ import { parseReportFile, rewordLetter } from "@/lib/ai";
 import { sampleReport, simulateRefresh } from "@/lib/sample";
 import { currentClient, endSession, requestMeta, requireClient, startSession } from "@/lib/session";
 import { goodStanding } from "@/lib/billing";
+import * as freeze from "@/lib/freeze";
+import * as notify from "@/lib/notify";
 import * as store from "@/lib/store";
 import { ItemType, Outcome } from "@/lib/types";
 import { validateReport } from "@/lib/validate";
@@ -39,6 +41,7 @@ export async function signAll() {
   const c = await currentClient();
   if (!c) redirect("/start");
   store.signContract(c.id, c.name, await requestMeta());
+  void notify.clientSigned(c.id); // sent in the background; a failed alert never blocks the sign-up
   redirect("/dashboard");
 }
 
@@ -130,8 +133,9 @@ export async function saveOutcome(f: FormData) {
   redirect(`/disputes/${id}`);
 }
 
-export async function requestFunding() {
+export async function requestFunding(f: FormData) {
   const c = await requireClient();
+  if (freeze.freezeProgress(c).frozen > 0 && f.get("lifted") !== "on") back("/funding", "error", "Confirm that you have lifted your freezes first. Lenders cannot see a frozen report.");
   store.log(c.id, "consumer", "funding_review_requested", { goal: c.funding_goal });
   back("/funding", "ok", "Request received. Funding options are optional and you are under no obligation.");
 }
@@ -141,3 +145,21 @@ export async function cancel() {
   back("/documents", "ok", "Your services are cancelled. No charge applies.");
 }
 export async function signOut() { await endSession(); redirect("/"); }
+
+// ---------- review and freeze steps ----------
+export async function reviewDone() {
+  const c = await requireClient();
+  try { freeze.markReviewed(c.id); } catch (e) { back("/report", "error", message(e)); }
+  redirect("/freeze");
+}
+export async function recordFreeze(f: FormData) {
+  const c = await requireClient();
+  const status = s(f, "status") === "skipped" ? "skipped" : "frozen";
+  try { freeze.setFreeze(c.id, s(f, "bureauId"), status, s(f, "confirmation")); } catch (e) { back("/freeze", "error", message(e)); }
+  redirect("/freeze");
+}
+export async function undoFreeze(f: FormData) {
+  const c = await requireClient();
+  try { freeze.clearFreeze(c.id, s(f, "bureauId")); } catch (e) { back("/freeze", "error", message(e)); }
+  redirect("/freeze");
+}
