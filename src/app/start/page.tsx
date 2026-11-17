@@ -5,6 +5,7 @@ import { Flash, TopBar } from "@/components/ui";
 import { currentClient } from "@/lib/session";
 import { brandBar, tenantForVisit } from "@/lib/branding";
 import { getInvite, markOpened } from "@/lib/invites";
+import { MetaPixel } from "@/components/MetaPixel";
 import { getTenant } from "@/lib/store";
 
 export default async function Start({ searchParams }: { searchParams: Promise<{ t?: string; i?: string; error?: string }> }) {
@@ -19,6 +20,7 @@ export default async function Start({ searchParams }: { searchParams: Promise<{ 
   return (
     <>
       <TopBar {...brandBar(tenant)} nav={false} />
+      {tenant.id === "tenant_default" && <MetaPixel audience="consumer" />}
       <main className="wrap narrow">
         <ol className="steps"><li className="now">Your details</li><li>Your rights</li><li>Sign</li></ol>
         <h1>Tell us who you are</h1>

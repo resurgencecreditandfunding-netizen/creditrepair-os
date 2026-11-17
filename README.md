@@ -66,6 +66,16 @@ Platform owner only, and where the owner lands after sign-in. Shows estimated mo
 - **Operators:** `leverageiq100.com/partners` (or the short link `/pro`), the operator sales page; Get started goes to `/console/signup`.
 - Each page links to the other. Tag ad links with `utm_source`, `utm_campaign` and `utm_content`; the last tagged link a person clicked in the 30 days before signing up is saved on their client or company record and totalled on the Business page under "Where sign-ups come from".
 
+## Meta Pixel and Conversions API
+
+Set `META_PIXEL_ID` and `META_CAPI_TOKEN` (optional `META_TEST_EVENT_CODE` while testing).
+
+- **Browser pixel** on the public pages only (`/`, `/partners`, `/start`, `/console/signup`): PageView and ViewContent with `content_category` consumer or operator. In-app page changes and automatic click detection are turned off, so it never follows anyone into their account.
+- **Server events (Conversions API)**, consumer funnel (direct clients only): Lead (account created), CompleteRegistration (agreement signed), InitiateCheckout and Purchase ($37). Operator funnel: Lead (company created), InitiateCheckout and Subscribe ($147). Each carries a stable event id, so a purchase confirmed twice counts once.
+- **Match keys:** email, phone, name, city, state and ZIP, SHA-256 hashed; plus `_fbp`, `_fbc` (or the ad click id saved from the landing URL), IP address and browser. They are captured at sign-up and reused for later events.
+- **Never sent:** report contents, findings, letters, scores, an operator's clients, or anyone whose browser sends Global Privacy Control.
+- The Business page shows events sent and failed in the last 7 days, with Meta's last error.
+
 ## How letters are built
 
 - Round 1 is always a bureau reinvestigation request under § 611. Identity theft items instead get their own § 605B block request (4 business days), in a separate letter.

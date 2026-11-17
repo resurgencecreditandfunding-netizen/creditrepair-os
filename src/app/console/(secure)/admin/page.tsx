@@ -10,6 +10,7 @@ import { requireOperator } from "@/lib/opsession";
 import { aiEnabled } from "@/lib/ai";
 import { DEMO } from "@/lib/store";
 import { emailConfigured, explainSendError, smsConfigured } from "@/lib/notify";
+import { capiOn, recentEvents } from "@/lib/meta";
 
 const SUB: Record<string, [string, string]> = {
   active: ["Paying", "dark"], trialing: ["Trial", ""], past_due: ["Payment overdue", "accent"], pending: ["Signed up, not paid", "accent"],
@@ -34,6 +35,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
     ["Operator payments (Stripe)", billingConfigured() && !!process.env.STRIPE_WEBHOOK_SECRET],
     ["Report reading (AI key)", aiEnabled()],
     ["Sign-up alerts (email or text)", emailConfigured() || smsConfigured()],
+    ["Meta Pixel and Conversions API", capiOn()],
     ["Demo mode off", !DEMO],
   ] as const;
 
@@ -111,6 +113,17 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
           </div>
         </div>
         <p className="fine" style={{ marginTop: 8 }}>Credited to the last tagged link a person clicked within 30 days before signing up. Tag ad links with utm_source, utm_campaign and utm_content.</p>
+
+        {capiOn() && (() => { const ev = recentEvents(); return (
+          <div className="card" style={{ marginTop: 16 }}>
+            <h3>Sent to Meta, last 7 days{process.env.META_TEST_EVENT_CODE ? " (test mode)" : ""}</h3>
+            {ev.byEvent.length === 0 ? <p className="small muted" style={{ margin: 0 }}>Nothing yet. Events are sent when someone signs up, signs, starts checkout, pays or subscribes.</p> : (
+              <table><thead><tr><th>Event</th><th>Sent</th><th>Failed</th></tr></thead>
+                <tbody>{ev.byEvent.map((e) => <tr key={e.event}><td>{e.event}</td><td>{e.sent}</td><td style={e.failed ? { color: "var(--accent-dark)" } : undefined}>{e.failed}</td></tr>)}</tbody></table>
+            )}
+            {ev.lastError && <p className="small" style={{ color: "var(--accent-dark)", margin: "8px 0 0" }}>Last error from Meta: {ev.lastError}</p>}
+          </div>
+        ); })()}
 
         <h2 style={{ marginTop: 24 }}>Funding requests ({b.funding.requests.length})</h2>
         <div className="card tablewrap">

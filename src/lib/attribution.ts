@@ -5,7 +5,7 @@
 export const SOURCE_COOKIE = "liq_src";
 export const SOURCE_DAYS = 30;
 
-export interface Source { source: string | null; medium: string | null; campaign: string | null; content: string | null; facebook: boolean; landing: string; at: string }
+export interface Source { source: string | null; medium: string | null; campaign: string | null; content: string | null; facebook: boolean; landing: string; at: string; fbc?: string | null }
 
 const clean = (v: string | null) => (v ? v.trim().slice(0, 80).replace(/[^\w .:/+-]/g, "") || null : null);
 
@@ -23,6 +23,7 @@ export function sourceFromUrl(url: URL, now = new Date()): Source | null {
     facebook,
     landing: url.pathname.slice(0, 80),
     at: now.toISOString(),
+    fbc: facebook ? `fb.1.${now.getTime()}.${q.get("fbclid")!.replace(/[^\w-]/g, "").slice(0, 500)}` : null,
   };
 }
 

@@ -42,7 +42,9 @@ export async function confirmSession(clientId: string, sessionId: string): Promi
 }
 export function markPaid(clientId: string, ref: string, cents: number) {
   const r = db().prepare("UPDATE clients SET paid_at = ?, paid_cents = ?, payment_ref = ? WHERE id = ? AND paid_at IS NULL").run(new Date().toISOString(), cents, ref, clientId);
-  if (r.changes) log(clientId, "consumer", "letters_paid", { amount: cents, ref });
+  if (!r.changes) return;
+  log(clientId, "consumer", "letters_paid", { amount: cents, ref });
+  if (cents > 0) void import("./meta").then((m) => m.consumerEvent(clientId, "Purchase", cents / 100));
 }
 
 export function setDirectPrice(op: Operator, dollars: number) {

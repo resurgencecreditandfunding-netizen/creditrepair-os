@@ -128,6 +128,9 @@ export async function registerCompany(f: FormData) {
     made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password"), source: (await (await import("next/headers")).cookies()).get((await import("@/lib/attribution")).SOURCE_COOKIE)?.value ?? null });
   } catch (e) { return back("/console/signup", "error", message(e)); }
   void (await import("@/lib/notify")).operatorEvent(made.tenantId, "registered");
+  const meta = await import("@/lib/meta");
+  meta.saveMatch("tenants", made.tenantId, await (await import("@/lib/meta-request")).currentMatch());
+  void meta.operatorEvent(made.tenantId, "Lead");
   await startOpSession(made.operatorId);
   redirect("/console/billing");
 }
@@ -136,6 +139,7 @@ export async function subscribe() {
   const billing = await import("@/lib/billing");
   let url = "";
   try { url = await billing.createCheckout(store.getTenant(op.tenant_id), op.email, await origin()); } catch (e) { back("/console/billing", "error", message(e)); }
+  void (await import("@/lib/meta")).operatorEvent(op.tenant_id, "InitiateCheckout", billing.PLAN_MONTHLY);
   redirect(url);
 }
 export async function manageBilling() {

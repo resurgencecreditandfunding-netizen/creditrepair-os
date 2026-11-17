@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MetaPixel } from "@/components/MetaPixel";
 import { registerCompany } from "@/app/console/actions";
 import { Flash, ConsoleBrand } from "@/components/ui";
 import { billingConfigured, PLAN_LABEL } from "@/lib/billing";
@@ -11,6 +12,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
   return (
     <>
       <header className="topbar"><div className="topbar-in"><ConsoleBrand /></div></header>
+      <MetaPixel audience="operator" />
       <main className="wrap narrow">
         <h1>Offer credit repair and funding to your clients</h1>
         <p className="muted">For tax professionals, funding professionals, and credit repair firms. {PLAN_LABEL}, cancel any time. Your clients are never charged by us.</p>

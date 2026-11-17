@@ -4,6 +4,7 @@ import { PRODUCT, TAGLINE } from "@/lib/brand";
 import { brandBar, tenantForVisit } from "@/lib/branding";
 import { priceLabel } from "@/lib/paywall";
 import { SalesPage } from "@/components/SalesPage";
+import { MetaPixel } from "@/components/MetaPixel";
 import { priceAtSigning } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ t
   const price = priceAtSigning(tenant.id);
   const paid = price > 0;
   const start = tenant.id !== "tenant_default" ? `/start?t=${encodeURIComponent(tenant.slug)}` : "/start";
-  if (tenant.id === "tenant_default") return <SalesPage price={paid ? priceLabel(price) : null} legalName={tenant.legal_name ?? tenant.name} address={tenant.address} />;
+  if (tenant.id === "tenant_default") return <><MetaPixel audience="consumer" /><SalesPage price={paid ? priceLabel(price) : null} legalName={tenant.legal_name ?? tenant.name} address={tenant.address} /></>;
   return (
     <>
       {tenant.id !== "tenant_default" && <TopBar {...brandBar(tenant)} nav={false} />}

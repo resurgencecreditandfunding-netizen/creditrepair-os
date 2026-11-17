@@ -29,6 +29,9 @@ export async function startOnboarding(f: FormData) {
     dob: s(f, "dob"), ssnLast4: s(f, "ssnLast4"), businessStage: s(f, "businessStage"), fundingGoal: s(f, "fundingGoal"), smsOptIn: f.get("smsOptIn") === "on", source: (await cookies()).get(SOURCE_COOKIE)?.value ?? null,
   });
   if (s(f, "invite")) (await import("@/lib/invites")).markJoined(s(f, "invite"), id);
+  const meta = await import("@/lib/meta");
+  meta.saveMatch("clients", id, await (await import("@/lib/meta-request")).currentMatch());
+  void meta.consumerEvent(id, "Lead");
   await startSession(id);
   redirect("/start/disclosure");
 }
@@ -46,6 +49,7 @@ export async function signAll() {
   store.signContract(c.id, c.name, await requestMeta());
   void notify.clientSigned(c.id); // sent in the background; a failed alert never blocks the sign-up
   void import("@/lib/reminders").then((r) => r.welcome(c.id));
+  void import("@/lib/meta").then((m) => m.consumerEvent(c.id, "CompleteRegistration"));
   redirect("/dashboard");
 }
 
@@ -239,5 +243,6 @@ export async function unlockLetters() {
   const { startCheckout } = await import("@/lib/paywall");
   let url = "";
   try { url = await startCheckout(c, await siteOrigin()); } catch (e) { back("/disputes", "error", message(e)); }
+  void import("@/lib/meta").then((m) => m.consumerEvent(c.id, "InitiateCheckout", c.price_cents / 100));
   redirect(url);
 }

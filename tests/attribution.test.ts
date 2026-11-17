@@ -8,7 +8,7 @@ process.env.ADMIN_PASSWORD = "correct-horse-battery";
 describe("campaign tags", () => {
   it("are read from an ad link and cleaned", () => {
     const s = sourceFromUrl(new URL("https://leverageiq100.com/partners?utm_source=facebook&utm_medium=paid&utm_campaign=operators-launch&utm_content=static-b<script>&fbclid=abc"), new Date("2026-11-18T12:00:00Z"))!;
-    expect(s).toEqual({ source: "facebook", medium: "paid", campaign: "operators-launch", content: "static-bscript", facebook: true, landing: "/partners", at: "2026-11-18T12:00:00.000Z" });
+    expect(s).toEqual({ source: "facebook", medium: "paid", campaign: "operators-launch", content: "static-bscript", facebook: true, landing: "/partners", at: "2026-11-18T12:00:00.000Z", fbc: "fb.1.1795003200000.abc" });
     expect(sourceLabel(s)).toBe("facebook · operators-launch · static-bscript");
   });
   it("treat a Facebook click without tags as Facebook", () => {

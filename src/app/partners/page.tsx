@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { MetaPixel } from "@/components/MetaPixel";
 import { PartnersPage } from "@/components/PartnersPage";
 import { tenantForVisit } from "@/lib/branding";
 import { getTenant } from "@/lib/store";
@@ -14,5 +15,5 @@ export const metadata: Metadata = {
 export default async function Partners() {
   if ((await tenantForVisit()).id !== "tenant_default") redirect("/");
   const t = getTenant("default");
-  return <PartnersPage legalName={t.legal_name ?? t.name} address={t.address} />;
+  return <><MetaPixel audience="operator" /><PartnersPage legalName={t.legal_name ?? t.name} address={t.address} /></>;
 }
