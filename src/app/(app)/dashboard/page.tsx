@@ -33,7 +33,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       <TopBar {...brandBarFor(c)} active="dashboard" />
       <main className="wrap">
         <h1>Welcome, {c.name.split(" ")[0]}</h1>
-        <p className="muted">Free credit repair, then funding.</p>
+        <p className="muted">{(c.price_cents ?? 0) > 0 ? "Your guided path from credit errors to funding." : "Free credit repair, then funding."}</p>
         <Flash {...sp} />
         {c.status !== "active" && <div className="notice">Your services are cancelled. <Link href="/documents">View your documents</Link>.</div>}
 
