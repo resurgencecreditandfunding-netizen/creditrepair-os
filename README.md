@@ -74,6 +74,19 @@ Platform owner only, and where the owner lands after sign-in. Shows estimated mo
 - Letters cannot be prepared until the client has reviewed their report and completed the secondary bureau freeze step: each listed bureau marked frozen or skipped. The platform owner edits the bureau list under Companies and logins. The funding request asks the client to confirm they have lifted their freezes.
 - Sign-up alerts go by email and/or text when a client signs: to that client's company, and to the owner (all companies or only direct clients, the owner's choice). The owner is also alerted when a company registers and when it starts paying. Each company sets its alert email and mobile under Companies and logins. Alerts run in the background; a failed alert is logged and never blocks a sign-up.
 
+## Client sign-in, reminders and replies
+
+- Clients sign in at `/login` with a one-time link sent to their email or mobile (30 minutes, single use). A welcome email after signing explains how to come back.
+- Reminders run hourly from `src/instrumentation.ts`, noon to 8pm Eastern: 2 days into a step, then every 5 days, at most 3 per step. Email always; text only for clients who opted in at sign-up. Clients turn them off on their Documents page. `REMINDERS_OFF=1` disables the schedule; the owner can run it from the Business page.
+- On a mailed letter, the client or staff upload a photo or PDF of the bureau's reply. The AI suggests a result per item with a quote; nothing is recorded until someone confirms. Files are stored beside the database (`UPLOAD_DIR`).
+
+## Funding, branding, invites, lessons and wins
+
+- Funding requests are deals the owner moves to funded under Funding. The operator's share of the owner's commission (company rate, else platform default) is locked in when funded; the owner records payouts. Operators see their deals and share, never the commission.
+- Company admins upload a logo and button colour. With `BASE_DOMAIN` set (and a wildcard domain on the host and in DNS), each company's site is `<link>.BASE_DOMAIN`.
+- Operators invite up to 500 people at once by email (never text), with their address and an unsubscribe link; tracked to sign-up.
+- Each company can link a lesson to any journey step. Clients get shareable win cards for deletions, score gains, funding unlocked and funding received, with a results-vary line and no report details.
+
 ## Operator subscription
 
 Companies sign up at `/console/signup`, pay through Stripe Checkout, and get console access when Stripe confirms payment. Access continues while a late payment is retried and closes on cancellation; their existing clients keep their own accounts. Companies the platform owner adds by hand are not charged.

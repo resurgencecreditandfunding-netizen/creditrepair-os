@@ -282,3 +282,12 @@ export async function resendInvites() {
   void inv.sendInvites(ids);
   back("/console/invites", "ok", `Sending ${ids.length} invite${ids.length === 1 ? "" : "s"}.`);
 }
+
+export async function saveLessonLinks(f: FormData) {
+  const op = await requireOperator();
+  if (!ops.canManage(op)) back("/console/settings", "error", "Ask your company admin to change lessons.");
+  const links: Record<string, string> = {};
+  for (const [k, v] of f.entries()) if (k.startsWith("l_")) links[k.slice(2)] = String(v);
+  try { (await import("@/lib/lessons")).saveLessons(op.tenant_id, links); } catch (e) { back("/console/settings", "error", message(e)); }
+  back("/console/settings", "ok", "Lesson links saved. Clients see them on their journey map.");
+}

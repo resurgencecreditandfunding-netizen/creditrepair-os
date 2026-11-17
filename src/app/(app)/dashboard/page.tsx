@@ -3,6 +3,8 @@ import { demoRefresh } from "@/app/actions";
 import { JourneyMap } from "@/components/JourneyMap";
 import { Flash, TopBar } from "@/components/ui";
 import { journey } from "@/lib/journey";
+import { lessonsFor } from "@/lib/lessons";
+import { winsFor } from "@/lib/wins";
 import { fmt, today } from "@/lib/dates";
 import { fundingStatus } from "@/lib/funding";
 import { requireClient } from "@/lib/session";
@@ -24,6 +26,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const waiting = letters.filter((l: any) => l.status === "mailed");
 
   const map = journey(c);
+  const wins = winsFor(c);
 
   return (
     <>
@@ -48,7 +51,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           })}
         </div>
 
-        <div style={{ marginTop: 16 }}><JourneyMap {...map} /></div>
+        <div style={{ marginTop: 16 }}><JourneyMap {...map} lessons={lessonsFor(c.tenant_id)} /></div>
+        {wins.length > 0 && (
+          <div className="notice row between">
+            <span><strong>You have {wins.length} win{wins.length > 1 ? "s" : ""} to share.</strong> {wins[0].big} {wins[0].line}.</span>
+            <Link className="btn accent" href="/wins">See your win cards</Link>
+          </div>
+        )}
 
         <div className="grid g2">
           <div className="card">

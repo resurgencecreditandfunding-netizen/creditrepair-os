@@ -1,6 +1,8 @@
 import { headers } from "next/headers";
-import { addFreezeBureau, addMonitoringService, addOperator, addTenant, removeFreezeBureau, removeLogin, removeMonitoringService, resetLoginPassword, saveAlerts, saveBranding, signOutOperator, testAlerts } from "@/app/console/actions";
+import { addFreezeBureau, addMonitoringService, addOperator, addTenant, removeFreezeBureau, removeLogin, removeMonitoringService, resetLoginPassword, saveAlerts, saveBranding, saveLessonLinks, signOutOperator, testAlerts } from "@/app/console/actions";
 import { listFreezeBureaus } from "@/lib/freeze";
+import { STEPS } from "@/lib/journey";
+import { lessonsFor } from "@/lib/lessons";
 import { brandBar, companyLink } from "@/lib/branding";
 import { emailConfigured, smsConfigured } from "@/lib/notify";
 import { getTenant } from "@/lib/store";
@@ -119,6 +121,20 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               </div>
             )}
           </form>
+        )}
+
+        {ops.canManage(op) && (
+          <details className="card">
+            <summary><strong>Lessons on the journey map</strong> <span className="small muted">({Object.keys(lessonsFor(op.tenant_id)).length} of {STEPS.length} linked)</span></summary>
+            <p className="small muted" style={{ marginTop: 10 }}>Link a lesson, video or community post to any step. Your clients see "Watch the lesson" on the step they are on and the next one. Leave a step blank to show nothing.</p>
+            <form action={saveLessonLinks}>
+              <table><tbody>{STEPS.map(([key, title], i) => (
+                <tr key={key}><td className="small" style={{ whiteSpace: "nowrap" }}>{i + 1}. {title}</td>
+                  <td><input type="text" name={`l_${key}`} defaultValue={lessonsFor(op.tenant_id)[key] ?? ""} placeholder="https://" aria-label={`Lesson link for ${title}`} /></td></tr>
+              ))}</tbody></table>
+              <button className="btn dark" type="submit" style={{ marginTop: 12 }}>Save lesson links</button>
+            </form>
+          </details>
         )}
 
         {ops.isPlatform(op) && (

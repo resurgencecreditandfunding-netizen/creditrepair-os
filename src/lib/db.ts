@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS invites (
   status TEXT NOT NULL, error TEXT, sent_at TEXT, opened_at TEXT, client_id TEXT, created_by TEXT, created_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS email_optouts (email TEXT PRIMARY KEY, at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS lessons (tenant_id TEXT NOT NULL, step_key TEXT NOT NULL, url TEXT NOT NULL, PRIMARY KEY (tenant_id, step_key));
 CREATE TABLE IF NOT EXISTS audit_log (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, client_id TEXT, actor TEXT NOT NULL, action TEXT NOT NULL,
   detail TEXT NOT NULL, at TEXT NOT NULL, prev_hash TEXT NOT NULL, hash TEXT NOT NULL

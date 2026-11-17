@@ -4,6 +4,12 @@ import { fundingStatus } from "./funding";
 import { canServe, cancelDeadline, currentFindings, getCases, getLetters, getLog, getReports, serviceStartDate } from "./store";
 
 type Row = Record<string, any>;
+/** Step keys and titles in order, for settings screens that list every step. */
+export const STEPS: [string, string][] = [
+  ["account", "Create your account"], ["sign", "Sign your agreement"], ["monitor", "Get your 3-bureau report"], ["upload", "Upload your report"],
+  ["review", "Review your report"], ["freeze", "Freeze the secondary bureaus"], ["wait", "3-day review period ends"], ["approve", "Approve your round 1 letters"],
+  ["mail", "Mail your letters"], ["responses", "Bureaus respond"], ["rounds", "Follow-up rounds as needed"], ["unlock", "Funding unlocks"], ["fund", "Lift your freezes and get funded"],
+];
 export type StepStatus = "done" | "current" | "next" | "upcoming" | "skipped";
 export interface Step { key: string; title: string; detail: string; status: StepStatus; href?: string; cta?: string }
 
