@@ -81,7 +81,9 @@ export async function uploadReport(f: FormData) {
       : await parseReportFile({ name: upload.name, type: upload.type, bytes: Buffer.from(await upload.arrayBuffer()) });
     store.saveReport(c.id, report);
   } catch (e) { back("/report", "error", message(e)); }
-  redirect("/report");
+  const fresh = store.getClient(c.id)!;
+  const n = store.currentFindings(c.id).length, accounts = store.getReports(c.id).at(-1)!.accounts.length;
+  back("/report", "ok", `Report uploaded and checked: ${accounts} account${accounts === 1 ? "" : "s"}, ${n} possible error${n === 1 ? "" : "s"} found. ${fresh.report_reviewed_at ? "Your letters will use this newer report." : "Next: check each item below, then click \"I've reviewed my report\" at the bottom of the page."}`);
 }
 
 export async function stateItem(f: FormData) {

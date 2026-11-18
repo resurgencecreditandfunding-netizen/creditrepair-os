@@ -1,5 +1,6 @@
 import type { Outcome } from "@/lib/types";
 import { OUTCOME_NAME } from "@/lib/rounds";
+import { SubmitButton } from "./SubmitButton";
 
 type Row = Record<string, any>;
 
@@ -17,7 +18,7 @@ export function ResponseUpload({ docs, suggestions, upload, confirm, hidden, fil
           <label>Got a reply? Upload a photo or PDF of it</label>
           <input type="file" name="file" required accept="application/pdf,image/jpeg,image/png,image/webp" />
         </div>
-        <button className="btn dark" type="submit">Upload reply</button>
+        <SubmitButton className="btn dark" pending="Reading the reply…">Upload reply</SubmitButton>
       </form>
       <p className="fine" style={{ margin: "6px 0 0" }}>{aiOn ? "We read the reply and suggest a result for each item. Nothing is recorded until you confirm." : "Reading replies automatically is not switched on yet; the file is kept with this letter."}</p>
       {docs.length > 0 && (

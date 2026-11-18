@@ -10,6 +10,7 @@ import { freezeProgress, letterBlocker } from "@/lib/freeze";
 import { journey } from "@/lib/journey";
 import { parseSource, sourceLabel } from "@/lib/attribution";
 import { JourneyMap } from "@/components/JourneyMap";
+import { SubmitButton } from "@/components/SubmitButton";
 import { groupFindings, STEP_NAME } from "@/lib/rounds";
 import * as store from "@/lib/store";
 import { BUREAU_NAME, BUREAUS } from "@/lib/types";
@@ -85,7 +86,7 @@ export default async function Client({ params, searchParams }: { params: Promise
             <form action={opUploadReport} className="row" style={{ marginTop: 14 }}>
               <Client />
               <input type="file" name="file" required aria-label="Credit report file" accept=".pdf,.html,.htm,.json" />
-              <button className="btn" type="submit" disabled={!c.signed_at}>Upload report</button>
+              {c.signed_at ? <SubmitButton className="btn" pending="Reading the report…">Upload report</SubmitButton> : <button className="btn" type="submit" disabled>Upload report</button>}
             </form>
             <p className="fine" style={{ margin: "8px 0 0" }}>{latest ? `Latest report: ${fmt(latest.pulledAt)} (${latest.source}), ${reports.length} on file.` : "No report on file."}</p>
           </div>

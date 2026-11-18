@@ -56,7 +56,8 @@ export async function opUploadReport(f: FormData) {
       : await parseReportFile({ name: upload.name, type: upload.type, bytes: Buffer.from(await upload.arrayBuffer()) });
     store.saveReport(clientId, report, actor(op));
   } catch (e) { back(path, "error", message(e)); }
-  back(path, "ok", "Report saved and audited.");
+  const n = store.currentFindings(clientId).length;
+  back(path, "ok", `Report saved and checked: ${n} possible error${n === 1 ? "" : "s"} found. The client reviews them in their account.`);
 }
 export async function opMailLetter(f: FormData) {
   const { op, clientId, path } = await guard(f);

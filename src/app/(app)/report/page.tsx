@@ -1,5 +1,6 @@
 import { clearItem, loadSample, reviewDone, stateItem, uploadReport } from "@/app/actions";
 import Link from "next/link";
+import { SubmitButton } from "@/components/SubmitButton";
 import { Flash, TopBar } from "@/components/ui";
 import { aiEnabled } from "@/lib/ai";
 import { listMonitoring } from "@/lib/console";
@@ -88,9 +89,15 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
         <h1>Credit report</h1>
         <p className="muted">{report ? `Pulled ${fmt(report.pulledAt)} · source: ${report.source}` : "No report connected yet."}</p>
         <Flash {...sp} />
+        {report && !c.report_reviewed_at && (
+          <div className="notice row between">
+            <span><strong>Next step: review your report.</strong> Check each account below. Mark anything that's accurate, and tell us about anything else that's wrong. Then confirm at the bottom of the page.</span>
+            <a className="btn accent" href="#reviewed">Go to the next step</a>
+          </div>
+        )}
 
         <div className="card">
-          <h2>{report ? "Add a newer report" : "Step 1. Get your 3-bureau report"}</h2>
+          <h2>{report ? "Upload a newer report (optional)" : "Step 1. Get your 3-bureau report"}</h2>
           {partners.length > 0 ? (
             <>
               <p className="small muted">{report ? "Pull a fresh report each month so we can see what changed." : "You need a report that shows all three bureaus. Sign up with one of these services, then download your report."}</p>
@@ -115,7 +122,7 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
           <div className="row">
             <form action={uploadReport} className="row">
               <input type="file" name="file" accept=".pdf,.html,.htm,.json,application/pdf,text/html" required aria-label="Credit report file" />
-              <button className="btn accent" type="submit">Upload report</button>
+              <SubmitButton pending="Reading your report… this can take a minute">Upload report</SubmitButton>
             </form>
             {store.DEMO && <form action={loadSample}><button className="btn" type="submit">Load demo report</button></form>}
           </div>
@@ -188,14 +195,14 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
                 </div>
               ))}
             </div>
-            <div className="card" style={{ marginTop: 24, borderColor: c.report_reviewed_at ? undefined : "var(--accent)" }}>
+            <div id="reviewed" className="card" style={{ marginTop: 24, scrollMarginTop: 80, borderColor: c.report_reviewed_at ? undefined : "var(--accent)" }}>
               {c.report_reviewed_at ? (
                 <div className="row between"><span><span className="pill dark">Reviewed</span> <span className="small muted">You can still change any item above until your letters are prepared.</span></span>
                   <Link className="btn" href="/freeze">Go to the freeze step</Link></div>
               ) : (
                 <form action={reviewDone} className="row between">
                   <span><strong>Finished reviewing?</strong> <span className="small muted">Confirm you have checked every item. Next you'll freeze the secondary bureaus.</span></span>
-                  <button className="btn accent" type="submit">I've reviewed my report</button>
+                  <SubmitButton pending="Saving…">I've reviewed my report</SubmitButton>
                 </form>
               )}
             </div>

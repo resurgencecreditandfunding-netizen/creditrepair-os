@@ -1,5 +1,6 @@
 import { resendInvites, signOutOperator, uploadInvites } from "@/app/console/actions";
 import { ConsoleBar, Flash } from "@/components/ui";
+import { SubmitButton } from "@/components/SubmitButton";
 import { isPlatform } from "@/lib/console";
 import { fmt } from "@/lib/dates";
 import { inviteLink, invitesFor, MAX_BATCH } from "@/lib/invites";
@@ -29,7 +30,7 @@ export default async function Invites({ searchParams }: { searchParams: Promise<
             <textarea id="list" name="list" rows={5} placeholder={"Jordan Rivers, jordan@example.com, 386-555-0111\nDana Cole, dana@example.com"} /></div>
           <div className="row" style={{ alignItems: "flex-end" }}>
             <div style={{ flex: "1 1 260px" }}><label htmlFor="file">Or upload a CSV export from your client list</label><input id="file" name="file" type="file" accept=".csv,text/csv,text/plain" /></div>
-            <button className="btn accent" type="submit">Create and send invites</button>
+            <SubmitButton pending="Creating invites…">Create and send invites</SubmitButton>
           </div>
           <p className="fine" style={{ margin: "10px 0 0" }}>
             Up to {MAX_BATCH} at a time. Invitations go by email only, never by text, because texting people who have not agreed to it is against the law.

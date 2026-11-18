@@ -211,3 +211,9 @@ details summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .legal li { margin: 6px 0; }
 .legal a { color: var(--accent-dark); }
 .legal-links a { color: inherit; }
+
+/* working indicator on buttons */
+.btn:disabled { opacity: .75; cursor: progress; }
+.spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; display: inline-block; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
