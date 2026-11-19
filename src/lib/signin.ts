@@ -14,7 +14,7 @@ export function createToken(clientId: string, minutes = 30) {
     .run(hash(token), clientId, new Date(now + minutes * 60_000).toISOString(), new Date(now).toISOString());
   return token;
 }
-export const signInUrl = (token: string) => `${site()}/login/verify?token=${encodeURIComponent(token)}`;
+export const signInUrl = (token: string, next?: string) => `${site()}/login/verify?token=${encodeURIComponent(token)}${next ? `&next=${encodeURIComponent(next)}` : ""}`;
 
 /** Spends a token. Returns the client id, or null if the token is unknown, used, or expired. */
 export function redeemToken(token: string): string | null {

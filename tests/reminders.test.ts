@@ -2,68 +2,173 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 process.env.DATABASE_PATH = ":memory:";
 process.env.APP_URL = "https://leverageiq100.com";
-let rem: typeof import("@/lib/reminders"), store: typeof import("@/lib/store"), db: typeof import("@/lib/db").db, sample: typeof import("@/lib/sample"), freeze: typeof import("@/lib/freeze");
+let rem: typeof import("@/lib/reminders"), store: typeof import("@/lib/store"), db: typeof import("@/lib/db").db, sample: typeof import("@/lib/sample");
+let seqs: typeof import("@/lib/sequences"), unsub: typeof import("@/lib/unsubscribe"), ops: typeof import("@/lib/console");
 const meta = { ip: "203.0.113.1", userAgent: "test" };
-const DAY = 86_400_000;
+const H = 3_600_000, DAY = 24 * H;
 // 3pm Eastern on a weekday, inside the sending window
-const NOON3 = Date.parse("2026-11-18T20:00:00Z");
-let id: string;
+const T0 = Date.parse("2026-11-18T20:00:00Z");
+const iso = (ms: number) => new Date(ms).toISOString();
 const sent: any[] = [];
+const person = (tenant: string, name: string, phone = "") => ({ tenant, name, email: `${name.split(" ")[0].toLowerCase()}@example.com`, phone, address: "1 Main", city: "Daytona Beach", state: "FL", zip: "32114", dob: "1988-04-12", ssnLast4: "1234", businessStage: "operating", fundingGoal: "", smsOptIn: !!phone });
+
 beforeAll(async () => {
-  rem = await import("@/lib/reminders"); store = await import("@/lib/store"); db = (await import("@/lib/db")).db; sample = await import("@/lib/sample"); freeze = await import("@/lib/freeze");
-  id = store.createClient({ tenant: "default", name: "Jordan Rivers", email: "jordan@example.com", phone: "386-555-0111", address: "1 Main", city: "Daytona Beach", state: "FL", zip: "32114", dob: "1988-04-12", ssnLast4: "1234", businessStage: "operating", fundingGoal: "", smsOptIn: true });
-  store.ackDisclosure(id, meta); store.signContract(id, "Jordan Rivers", meta);
+  rem = await import("@/lib/reminders"); store = await import("@/lib/store"); db = (await import("@/lib/db")).db; sample = await import("@/lib/sample");
+  seqs = await import("@/lib/sequences"); unsub = await import("@/lib/unsubscribe"); ops = await import("@/lib/console");
+  ops.registerCompany({ company: "Smith Tax", legalName: "Smith Tax LLC", address: "9 Oak", kind: "tax_pro", name: "Ann", email: "ann@smith.example", password: "long-password-1" });
 });
 const stub = () => vi.stubGlobal("fetch", vi.fn(async (url: string, init: RequestInit) => { sent.push({ url, body: String(init.body) }); return new Response("{}"); }));
 const on = () => Object.assign(process.env, { RESEND_API_KEY: "re_x", TWILIO_ACCOUNT_SID: "AC1", TWILIO_AUTH_TOKEN: "t", TWILIO_FROM: "+13865550000" });
 afterEach(() => { vi.unstubAllGlobals(); sent.length = 0; for (const k of ["RESEND_API_KEY", "TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM"]) delete process.env[k]; });
+const emailsTo = (to: string) => sent.filter((x) => x.url.endsWith("/emails")).map((x) => JSON.parse(x.body)).filter((e) => e.to[0] === to);
+/** Only this client is checked: every other test client is paused while it runs. */
+async function runFor(id: string, at: number) {
+  db().prepare("UPDATE clients SET reminders_off = 1 WHERE id != ? AND reminders_off = 0").run(id);
+  try { return await rem.runReminders(at); } finally { db().prepare("UPDATE clients SET reminders_off = 0 WHERE id != ? AND id NOT IN (SELECT client_id FROM audit_log WHERE action = 'reminder_emails_unsubscribed')").run(id); }
+}
+const setTimes = (id: string, t: { created?: number; signed?: number }) => {
+  if (t.created !== undefined) db().prepare("UPDATE clients SET created_at = ? WHERE id = ?").run(iso(t.created), id);
+  if (t.signed !== undefined) db().prepare("UPDATE clients SET signed_at = ? WHERE id = ?").run(iso(t.signed), id);
+};
+/** Signs, reviews, freezes and drafts round 1, with every timestamp at `at`. */
+function withDrafts(tenant: string, name: string, at: number) {
+  const id = store.createClient(person(tenant, name));
+  store.ackDisclosure(id, meta); store.signContract(id, name, meta);
+  db().prepare("UPDATE clients SET signed_at = '2026-01-05T12:00:00Z', report_reviewed_at = ?, freeze_done_at = ? WHERE id = ?").run(iso(at), iso(at), id);
+  store.saveReport(id, sample.sampleReport());
+  store.buildRound(id);
+  db().prepare("UPDATE reports SET created_at = ? WHERE client_id = ?").run(iso(at - DAY), id);
+  db().prepare("UPDATE letters SET created_at = ? WHERE client_id = ?").run(iso(at), id);
+  return id;
+}
 
-describe("reminders", () => {
+describe("sending hours", () => {
   it("only send inside legal texting hours", () => {
     expect(rem.inSendWindow(Date.parse("2026-11-18T20:00:00Z"))).toBe(true);  // 3pm ET
     expect(rem.inSendWindow(Date.parse("2026-11-18T14:00:00Z"))).toBe(false); // 9am ET = 6am PT
     expect(rem.inSendWindow(Date.parse("2026-11-19T02:00:00Z"))).toBe(false); // 9pm ET
   });
-  it("wait two days in a step, then remind by email and text, then every five days, at most three times", async () => {
-    on(); stub();
-    expect(rem.messageFor(store.getClient(id)!)?.key).toBe("monitor");
-    expect((await rem.runReminders(NOON3)).sent).toBe(0);          // first sighting
-    expect((await rem.runReminders(NOON3 + 1 * DAY)).sent).toBe(0);
-    expect((await rem.runReminders(NOON3 + 2 * DAY)).sent).toBe(1);
-    const email = JSON.parse(sent.find((x) => x.url.endsWith("/emails")).body);
-    expect(email.subject).toBe("Jordan, your next step: get your 3-bureau credit report so we can audit it");
-    expect(email.text).toContain("https://leverageiq100.com/login/verify?token=");
-    expect(email.text).toContain("Turn them off");
-    const text = new URLSearchParams(sent.find((x) => x.url.includes("twilio")).body);
-    expect(text.get("To")).toBe("+13865550111");
-    expect(text.get("Body")).toContain("Reply STOP");
-    expect((await rem.runReminders(NOON3 + 4 * DAY)).sent).toBe(0);
-    expect((await rem.runReminders(NOON3 + 7 * DAY)).sent).toBe(1);
-    expect((await rem.runReminders(NOON3 + 12 * DAY)).sent).toBe(1);
-    expect((await rem.runReminders(NOON3 + 30 * DAY)).sent).toBe(0); // max reached
-    expect(store.getLog(id).filter((e) => e.action === "reminder_sent")).toHaveLength(3);
+  it("do nothing without an email or text service", async () => {
+    expect((await rem.runReminders(T0)).skipped).toBe("no email or text service");
   });
-  it("start a fresh count when the client moves to the next step", async () => {
+});
+
+describe("follow-up sequences", () => {
+  it("follow up with people who filled in the form but didn't sign, then stop after three", async () => {
     on(); stub();
+    const id = store.createClient(person("default", "Jordan Rivers", "386-555-0111"));
+    setTimes(id, { created: T0 });
+    expect(seqs.sequenceFor(store.getClient(id)!)?.seq.key).toBe("finish_signup");
+    expect((await runFor(id, T0 + 1 * H)).sent).toBe(0);
+    expect((await runFor(id, T0 + 2 * H)).sent).toBe(1);
+    const [e] = emailsTo("jordan@example.com");
+    expect(e.subject).toBe("Jordan, you're one click from your free audit");
+    expect(e.text).toContain("https://leverageiq100.com/login/verify?token=");
+    expect(e.text).toContain("&next=%2Fstart%2Fsign");
+    expect(e.text).toContain("220 Sheila");
+    expect(e.text).toContain("https://leverageiq100.com/reminders/off?t=");
+    expect(e.reply_to).toBe("support@leverageiq100.com");
+    expect(e.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+    expect(e.headers["List-Unsubscribe"]).toContain("/api/reminders-off?t=");
+    expect(new URLSearchParams(sent.find((x) => x.url.includes("twilio")).body).get("Body")).toContain("Reply STOP");
+    expect((await runFor(id, T0 + 3 * H)).sent).toBe(0);
+    expect((await runFor(id, T0 + 24 * H)).sent).toBe(1);
+    expect((await runFor(id, T0 + 72 * H)).sent).toBe(1);
+    expect((await runFor(id, T0 + 30 * DAY)).sent).toBe(0);
+    expect(emailsTo("jordan@example.com").map((m) => m.subject)).toEqual([
+      "Jordan, you're one click from your free audit", "Your audit is ready to start", "Should we close your file?"]);
+    expect(store.getLog(id).filter((x) => x.action === "reminder_sent")).toHaveLength(0);
+  });
+
+  it("switch to the next stage's emails as soon as they move forward", async () => {
+    on(); stub();
+    const id = store.createClient(person("default", "Casey Long"));
+    setTimes(id, { created: T0 });
+    await runFor(id, T0 + 2 * H);
+    store.ackDisclosure(id, meta); store.signContract(id, "Casey Long", meta);
+    setTimes(id, { signed: T0 + 5 * H });
+    expect(seqs.sequenceFor(store.getClient(id)!)?.seq.key).toBe("get_report");
+    expect((await runFor(id, T0 + 22 * H)).sent).toBe(0);  // 17 hours into the new stage
+    expect((await runFor(id, T0 + 26 * H)).sent).toBe(1);
+    expect(emailsTo("casey@example.com").at(-1).subject).toBe("Step 2: get your 3-bureau report (about 10 minutes)");
     store.saveReport(id, sample.sampleReport());
-    expect(rem.messageFor(store.getClient(id)!)?.key).toBe("review");
-    await rem.runReminders(NOON3 + 40 * DAY);
-    expect((await rem.runReminders(NOON3 + 42 * DAY)).sent).toBe(1);
+    db().prepare("UPDATE reports SET created_at = ? WHERE client_id = ?").run(iso(T0 + 30 * H), id);
+    expect(seqs.sequenceFor(store.getClient(id)!)?.seq.key).toBe("review_freeze");
+    expect((await runFor(id, T0 + 51 * H)).sent).toBe(1);
+    expect(emailsTo("casey@example.com").at(-1).subject).toMatch(/^We found \d+ possible errors on your reports$/);
+  });
+
+  it("pace people who are already behind: first email first, then at least 20 hours apart", async () => {
+    on(); stub();
+    const id = store.createClient(person("default", "Riley Park"));
+    setTimes(id, { created: T0 - 10 * DAY });
+    expect(await runFor(id, T0)).toMatchObject({ sent: 1, failed: 0 });
+    expect((await runFor(id, T0 + 4 * H)).sent).toBe(0);   // 7pm: the next email is overdue, but too soon after the last
+    expect((await runFor(id, T0 + 21 * H)).sent).toBe(1);  // noon the next day
+    expect(emailsTo("riley@example.com").map((m) => m.subject)).toEqual(["Riley, you're one click from your free audit", "Your audit is ready to start"]);
+  });
+
+  it("send the $37 letter emails to direct customers only", async () => {
+    on(); stub();
+    const direct = withDrafts("default", "Morgan Direct", T0);
+    db().prepare("UPDATE clients SET price_cents = 3700, paid_at = NULL WHERE id = ?").run(direct);
+    expect(seqs.sequenceFor(store.getClient(direct)!)?.seq.key).toBe("unlock_letters");
+    expect((await runFor(direct, T0 + 3 * H)).sent).toBe(1);
+    expect(emailsTo("morgan@example.com")[0].subject).toMatch(/^Your \d+ dispute letters? (is|are) ready$/);
+    db().prepare("UPDATE clients SET paid_at = ? WHERE id = ?").run(iso(T0 + 4 * H), direct);
+    expect(seqs.sequenceFor(store.getClient(direct)!)).toBeNull();
+
+    const viaOperator = withDrafts("smith-tax", "Avery Operator", T0);
+    expect(seqs.sequenceFor(store.getClient(viaOperator)!)).toBeNull();
+    expect(rem.messageFor(store.getClient(viaOperator)!)?.key).toBe("approve");
+  });
+
+  it("let anyone stop the emails from a signed link, without signing in", async () => {
+    on(); stub();
+    const id = store.createClient(person("default", "Quinn Stop"));
+    setTimes(id, { created: T0 });
+    const t = unsub.unsubscribeToken(id);
+    expect(unsub.clientFromToken(t)).toBe(id);
+    expect(unsub.clientFromToken(`${id}.${"x".repeat(32)}`)).toBeNull();
+    expect(unsub.clientFromToken("nonsense")).toBeNull();
+    expect(unsub.turnOff(id)).toBe(true);
+    expect((await rem.runReminders(T0 + 2 * H)).sent).toBeGreaterThanOrEqual(0);
+    expect(emailsTo("quinn@example.com")).toHaveLength(0);
+  });
+
+  it("render every email with sample values", () => {
+    for (const q of seqs.SEQUENCES) for (const st of q.steps) {
+      const m = st.write(seqs.SAMPLE_CTX);
+      expect(m.subject.length).toBeGreaterThan(5);
+      expect(m.body).not.toMatch(/undefined|NaN|\[object/);
+      expect(m.body).toContain("https://leverageiq100.com/");
+    }
+  });
+});
+
+describe("generic reminders after the follow-up stages", () => {
+  it("wait two days in a step, then remind, then every five days, at most three times", async () => {
+    on(); stub();
+    const id = withDrafts("smith-tax", "Jamie Approve", T0);
+    expect(rem.messageFor(store.getClient(id)!)?.key).toBe("approve");
+    expect((await runFor(id, T0)).sent).toBe(0);          // first sighting
+    expect((await runFor(id, T0 + 1 * DAY)).sent).toBe(0);
+    expect((await runFor(id, T0 + 2 * DAY)).sent).toBe(1);
+    const email = emailsTo("jamie@example.com")[0];
+    expect(email.subject).toMatch(/^Jamie, your next step: read and approve your \d+ dispute letters?$/);
+    expect(email.text).toContain("https://leverageiq100.com/login/verify?token=");
+    expect(email.text).toContain("/reminders/off?t=");
+    expect((await runFor(id, T0 + 4 * DAY)).sent).toBe(0);
+    expect((await runFor(id, T0 + 7 * DAY)).sent).toBe(1);
+    expect((await runFor(id, T0 + 12 * DAY)).sent).toBe(1);
+    expect((await runFor(id, T0 + 30 * DAY)).sent).toBe(0); // max reached
+    expect(store.getLog(id).filter((e) => e.action === "reminder_sent")).toHaveLength(3);
   });
   it("respect the client's choices", async () => {
     on(); stub();
-    rem.setPrefs(id, { reminders: true, texts: false });
-    freeze.markReviewed(id);
-    await rem.runReminders(NOON3 + 50 * DAY);
-    await rem.runReminders(NOON3 + 52 * DAY);
-    expect(sent.some((x) => x.url.includes("twilio"))).toBe(false);
-    expect(sent.some((x) => x.url.endsWith("/emails"))).toBe(true);
+    const id = withDrafts("smith-tax", "Drew Prefs", T0);
     rem.setPrefs(id, { reminders: false, texts: false });
-    sent.length = 0;
-    await rem.runReminders(NOON3 + 60 * DAY);
-    expect(sent).toHaveLength(0);
-  });
-  it("do nothing without an email or text service", async () => {
-    expect((await rem.runReminders(NOON3)).skipped).toBe("no email or text service");
+    await runFor(id, T0); await runFor(id, T0 + 3 * DAY);
+    expect(emailsTo("drew@example.com")).toHaveLength(0);
   });
 });
