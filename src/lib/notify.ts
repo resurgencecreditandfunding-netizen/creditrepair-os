@@ -45,11 +45,17 @@ export function recipientsForClient(client: Row): Recipient[] {
   return out;
 }
 
-export async function sendEmail(to: string, subject: string, text: string, from = FROM()) {
+export interface EmailExtras { replyTo?: string | null; unsubscribeUrl?: string | null }
+export async function sendEmail(to: string, subject: string, text: string, from = FROM(), extras: EmailExtras = {}) {
   const res = await fetch(`${process.env.RESEND_API_BASE ?? "https://api.resend.com"}/emails`, {
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from, to: [to], subject, text }),
+    body: JSON.stringify({
+      from, to: [to], subject, text,
+      ...(extras.replyTo ? { reply_to: extras.replyTo } : {}),
+      // One-click unsubscribe for mail apps (Gmail, Yahoo, Apple Mail)
+      ...(extras.unsubscribeUrl ? { headers: { "List-Unsubscribe": `<${extras.unsubscribeUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } } : {}),
+    }),
   });
   if (!res.ok) throw new Error(`email ${res.status}: ${(await res.text()).slice(0, 200)}`);
 }

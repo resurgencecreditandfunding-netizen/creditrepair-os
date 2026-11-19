@@ -11,6 +11,7 @@ import { aiEnabled } from "@/lib/ai";
 import { DEMO } from "@/lib/store";
 import { emailConfigured, explainSendError, smsConfigured } from "@/lib/notify";
 import { capiOn, recentEvents } from "@/lib/meta";
+import { sequenceStats, welcomeCount } from "@/lib/sequences";
 
 const SUB: Record<string, [string, string]> = {
   active: ["Paying", "dark"], trialing: ["Trial", ""], past_due: ["Payment overdue", "accent"], pending: ["Signed up, not paid", "accent"],
@@ -55,7 +56,7 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
         )}
 
         <form action={runRemindersNow} className="row small muted" style={{ marginBottom: 16 }}>
-          <span>Client reminders run every hour between noon and 8pm Eastern.</span>
+          <span>Client reminders and follow-up emails run every hour between noon and 8pm Eastern.</span>
           <button className="btn link" type="submit">Run reminders now</button>
         </form>
 
@@ -124,6 +125,16 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
             {ev.lastError && <p className="small" style={{ color: "var(--accent-dark)", margin: "8px 0 0" }}>Last error from Meta: {ev.lastError}</p>}
           </div>
         ); })()}
+
+        <h2 style={{ marginTop: 24 }}>Follow-up emails</h2>
+        <div className="card tablewrap">
+          <p className="small muted" style={{ marginTop: 0 }}>Sent automatically to people who stall at a step. Each sequence stops as soon as they move on. &quot;Moved on&quot; counts people who got that email and have since passed that stage. <Link href="/console/admin/emails">Read every email</Link></p>
+          <table><thead><tr><th>Stage</th>{[1, 2, 3, 4].map((n) => <th key={n}>Email {n}</th>)}</tr></thead>
+            <tbody><tr><td>Welcome (everyone, right after the form)</td><td>{welcomeCount()} sent</td><td colSpan={3} /></tr>
+            {sequenceStats().map((q) => (
+              <tr key={q.key}><td>{q.name}</td>{[0, 1, 2, 3].map((i) => <td key={i}>{q.steps[i] ? `${q.steps[i].sent} sent · ${q.steps[i].moved} moved on` : "—"}</td>)}</tr>
+            ))}</tbody></table>
+        </div>
 
         <h2 style={{ marginTop: 24 }}>Funding requests ({b.funding.requests.length})</h2>
         <div className="card tablewrap">

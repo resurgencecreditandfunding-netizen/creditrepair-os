@@ -1,9 +1,11 @@
 import { db } from "./db";
 import { journey } from "./journey";
-import { emailConfigured, fromAs, normalizePhone, sendEmail, sendSms, site, smsConfigured } from "./notify";
+import { emailConfigured, fromAs, normalizePhone, sendEmail, sendSms, site, smsConfigured, validEmail } from "./notify";
 import { createToken, signInUrl } from "./signin";
 import { today } from "./dates";
 import { draftableCases, getLetters, getReports, getTenant, log } from "./store";
+import { contextFor, recordSend, sentSteps, sequenceFor, WELCOME, welcomeSentAt, type Sequence } from "./sequences";
+import { oneClickUrl, unsubscribeUrl } from "./unsubscribe";
 
 type Row = Record<string, any>;
 const DAY = 86_400_000;
@@ -60,13 +62,79 @@ async function send(client: Row, ask: string) {
   if (emailConfigured() && client.email) {
     const link = signInUrl(createToken(client.id, 72 * 60));
     await sendEmail(client.email, `${first}, your next step: ${ask.split(".")[0]}`,
-      `Hi ${first},\n\nYour next step is to ${ask}.\n\nSign in here (link works once, for 3 days): ${link}\nOr go to ${site()}/login any time.\n\n— ${company.name}\n${company.address}\n\nYou get these reminders because you have an account with ${company.name}. Turn them off on the Documents page of your account.`,
-      fromAs(company.name));
+      `Hi ${first},\n\nYour next step is to ${ask}.\n\nSign in here (link works once, for 3 days): ${link}\nOr go to ${site()}/login any time.${footer(client, company)}`,
+      fromAs(company.name), { unsubscribeUrl: oneClickUrl(client.id) });
     sent.push("email");
   }
   const phone = client.sms_opt_in_at && client.phone ? normalizePhone(client.phone) : null;
   if (smsConfigured() && phone) {
     await sendSms(phone, `${company.name}: ${first}, your next step is to ${ask.split(".")[0]}. ${site()}/login Reply STOP to opt out.`);
+    sent.push("text");
+  }
+  return sent;
+}
+
+/** Who sent it, where, why they're getting it, and a one-click way to stop: required on every follow-up email. */
+export const footer = (client: Row, company: Row) =>
+  `\n\n— ${company.name}\n${company.address}\n\nYou're getting this because you started an account with ${company.name}. Stop these emails: ${unsubscribeUrl(client.id)}`;
+
+/** Least time between two follow-up emails, however far behind someone is. */
+export const MIN_GAP = 20 * 3_600_000;
+
+/** The next follow-up email that's due for this client in their current sequence, if any. */
+export function dueStep(c: Row, nowMs: number): { seq: Sequence; step: number } | null {
+  const at = sequenceFor(c);
+  if (!at) return null;
+  const sent = sentSteps(c.id, at.seq.key);
+  const step = sent.length ? Math.max(...sent.map((r) => r.step)) + 1 : 0;
+  if (step >= at.seq.steps.length) return null;
+  if (nowMs - Date.parse(at.since) < at.seq.steps[step].after) return null;
+  const last = db().prepare("SELECT max(sent_at) AS t FROM sequence_sends WHERE client_id = ? AND seq != 'welcome'").get(c.id) as Row;
+  if (last?.t && nowMs - Date.parse(last.t) < MIN_GAP) return null;
+  // The welcome always comes first. Sent on time, the first follow-up can come 2 hours later; sent late (people who
+  // registered before it existed), the follow-ups wait a full day so nobody gets two emails back to back.
+  const w = welcomeSentAt(c.id);
+  if (!w) return null;
+  const late = Date.parse(w) - Date.parse(c.created_at) > 3_600_000;
+  if (nowMs - Date.parse(w) < (late ? MIN_GAP : 2 * 3_600_000)) return null;
+  return { seq: at.seq, step };
+}
+
+/** Where replies go: a person, never the no-reply sender. */
+const replyToFor = (company: Row) => (company.id === "tenant_default" ? process.env.CONTACT_EMAIL || "support@leverageiq100.com" : company.notify_email || null);
+
+/** The no-pressure welcome, sent the moment someone registers. Returns true when it went out. */
+export async function sendWelcome(clientId: string, nowMs = Date.now()) {
+  try {
+    const c = db().prepare("SELECT * FROM clients WHERE id = ?").get(clientId) as Row | undefined;
+    if (!c || c.reminders_off || welcomeSentAt(c.id) || !emailConfigured() || !c.email || !validEmail(c.email)) return false;
+    const company = getTenant(c.tenant_id);
+    let token: string | null = null;
+    const link = (path: string) => signInUrl(token ??= createToken(c.id, 72 * 60), path);
+    const mail = WELCOME(contextFor(c, link));
+    await sendEmail(c.email, mail.subject, mail.body + footer(c, company), fromAs(company.name), { unsubscribeUrl: oneClickUrl(c.id), replyTo: replyToFor(company) });
+    recordSend(c.id, "welcome", 0, new Date(nowMs).toISOString());
+    log(c.id, "system", "welcome_email_sent");
+    return true;
+  } catch (e) {
+    log(clientId, "system", "welcome_email_failed", { error: String((e as Error).message).slice(0, 200) });
+    return false;
+  }
+}
+
+async function sendSequence(c: Row, seq: Sequence, step: number) {
+  const company = getTenant(c.tenant_id);
+  let token: string | null = null;
+  const link = (path: string) => signInUrl(token ??= createToken(c.id, 72 * 60), path);
+  const mail = seq.steps[step].write(contextFor(c, link));
+  const sent: string[] = [];
+  if (emailConfigured() && c.email && validEmail(c.email)) {
+    await sendEmail(c.email, mail.subject, mail.body + footer(c, company), fromAs(company.name), { unsubscribeUrl: oneClickUrl(c.id), replyTo: replyToFor(company) });
+    sent.push("email");
+  }
+  const phone = mail.sms && c.sms_opt_in_at && c.phone ? normalizePhone(c.phone) : null;
+  if (smsConfigured() && phone) {
+    await sendSms(phone, `${mail.sms} Reply STOP to opt out.`);
     sent.push("text");
   }
   return sent;
@@ -78,9 +146,31 @@ export async function runReminders(nowMs = Date.now()) {
   const out = { checked: 0, sent: 0, failed: 0, skipped: "" };
   if (!emailConfigured() && !smsConfigured()) return { ...out, skipped: "no email or text service" };
   if (!inSendWindow(nowMs)) return { ...out, skipped: "outside sending hours" };
-  const clients = d.prepare("SELECT * FROM clients WHERE status = 'active' AND signed_at IS NOT NULL AND reminders_off = 0").all() as Row[];
+  const clients = d.prepare("SELECT * FROM clients WHERE status = 'active' AND reminders_off = 0").all() as Row[];
   for (const c of clients) {
     out.checked++;
+    // Anyone in an early stage who never got the welcome (it failed, or they registered before it existed) gets it first.
+    if (sequenceFor(c) && !welcomeSentAt(c.id) && emailConfigured() && c.email && validEmail(c.email)) {
+      if (await sendWelcome(c.id, nowMs)) out.sent++; else out.failed++;
+      continue;
+    }
+    // Stage follow-ups first. Anyone in a stage that has a sequence gets only that sequence, never the generic reminder too.
+    if (sequenceFor(c)) {
+      const due = dueStep(c, nowMs);
+      if (!due) continue;
+      try {
+        const channels = await sendSequence(c, due.seq, due.step);
+        if (!channels.length) continue;
+        recordSend(c.id, due.seq.key, due.step, new Date(nowMs).toISOString());
+        log(c.id, "system", "followup_sent", { sequence: due.seq.key, email: due.step + 1, channels });
+        out.sent++;
+      } catch (e) {
+        out.failed++;
+        log(c.id, "system", "followup_failed", { sequence: due.seq.key, email: due.step + 1, error: String((e as Error).message).slice(0, 200) });
+      }
+      continue;
+    }
+    if (!c.signed_at) continue;
     const m = messageFor(c);
     if (!m) continue;
     const row = d.prepare("SELECT * FROM reminders WHERE client_id = ? AND step_key = ?").get(c.id, m.key) as Row | undefined;
@@ -109,8 +199,8 @@ export async function welcome(clientId: string) {
     const c = db().prepare("SELECT * FROM clients WHERE id = ?").get(clientId) as Row;
     if (!c || !emailConfigured()) return;
     const company = getTenant(c.tenant_id);
-    await sendEmail(c.email, `Welcome to ${company.name}`,
-      `Hi ${c.name.split(" ")[0]},\n\nYour account is ready. There is no password: to come back later, go to ${site()}/login and enter this email address. We will send you a one-time sign-in link.\n\nYour first step is to get your 3-bureau credit report and upload it.\n\nYour signed documents are on the Documents page of your account.\n\n— ${company.name}\n${company.address}`,
+    await sendEmail(c.email, `You're signed up with ${company.name}: how to get back in`,
+      `Hi ${c.name.split(" ")[0]},\n\nYou're signed. Your account is ready. There is no password: to come back later, go to ${site()}/login and enter this email address. We will send you a one-time sign-in link.\n\nYour first step is to get your 3-bureau credit report and upload it.\n\nYour signed documents are on the Documents page of your account.\n\n— ${company.name}\n${company.address}`,
       fromAs(company.name));
     log(clientId, "system", "welcome_sent");
   } catch (e) { console.error("[welcome]", e); }

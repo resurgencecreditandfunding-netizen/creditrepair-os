@@ -32,6 +32,7 @@ export async function startOnboarding(f: FormData) {
   const meta = await import("@/lib/meta");
   meta.saveMatch("clients", id, await (await import("@/lib/meta-request")).currentMatch());
   void meta.consumerEvent(id, "Lead");
+  void import("@/lib/reminders").then((r) => r.sendWelcome(id));
   await startSession(id);
   redirect("/start/disclosure");
 }
@@ -196,7 +197,8 @@ export async function completeSignIn(f: FormData) {
   const id = redeemToken(s(f, "token"));
   if (!id) back("/login", "error", "That link has expired or was already used. Request a new one.");
   await startSession(id!);
-  redirect("/dashboard");
+  const next = s(f, "next");
+  redirect(/^\/[a-z][\w/-]*$/.test(next) ? next : "/dashboard");
 }
 
 export async function setReminderPrefs(f: FormData) {
@@ -262,4 +264,10 @@ export async function optOutEmail(f: FormData) {
   if (!email.includes("@")) back("/privacy/choices", "error", "Enter a valid email address.");
   (await import("@/lib/meta")).optOutByEmail(email);
   back("/privacy/choices", "ok", "Done. If that email is on an account, we will no longer send events about it to Meta.");
+}
+
+export async function stopReminderEmails(f: FormData) {
+  const { clientFromToken, turnOff } = await import("@/lib/unsubscribe");
+  const id = clientFromToken(s(f, "t"));
+  redirect(`/reminders/off?done=${id && turnOff(id) ? 1 : 0}`);
 }
