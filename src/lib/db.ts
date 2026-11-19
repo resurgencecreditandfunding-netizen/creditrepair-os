@@ -108,8 +108,19 @@ function seedAdmin(d: DatabaseSync) {
 function seedMonitoring(d: DatabaseSync) {
   if (d.prepare("SELECT 1 FROM settings WHERE key = 'monitoring_seeded'").get()) return;
   d.prepare("INSERT INTO monitoring_services (id, name, url, blurb, created_at) VALUES (?,?,?,?,?)")
-    .run(randomUUID(), "MyFreeScoreNow", "https://app.myfreescorenow.com/enroll/B03C9622", "3-bureau report and scores", new Date().toISOString());
+    .run(randomUUID(), "MyFreeScoreNow", "https://app.myfreescorenow.com/enroll/B04C9622", "3-bureau report and scores. 7-day trial for $1", new Date().toISOString());
   d.prepare("INSERT INTO settings (key, value) VALUES ('monitoring_seeded', '1')").run();
+}
+
+/**
+ * One-time switch to the $1 7-day trial link (Nov 2026). Only touches the original link, so a partner the owner
+ * edited is left alone. Also restarts the "no report yet" emails once, so everyone stuck there gets the trial email.
+ */
+function switchToTrialLink(d: DatabaseSync) {
+  if (d.prepare("SELECT 1 FROM settings WHERE key = 'monitoring_trial_link'").get()) return;
+  d.prepare("UPDATE monitoring_services SET url = ?, blurb = ? WHERE url = ?").run("https://app.myfreescorenow.com/enroll/B04C9622", "3-bureau report and scores. 7-day trial for $1", "https://app.myfreescorenow.com/enroll/B03C9622");
+  d.prepare("DELETE FROM sequence_sends WHERE seq = 'get_report'").run();
+  d.prepare("INSERT INTO settings (key, value) VALUES ('monitoring_trial_link', '1')").run();
 }
 
 /**
@@ -160,6 +171,7 @@ export function db(): DatabaseSync {
     try { d.exec(`ALTER TABLE clients ADD COLUMN ${col}`); } catch { /* column already exists */ }
   }
   seedMonitoring(d);
+  switchToTrialLink(d);
   seedFreezeBureaus(d);
   g.__cfoDb = d;
   return d;

@@ -49,7 +49,7 @@ export async function signAll() {
   if (!c) redirect("/start");
   store.signContract(c.id, c.name, await requestMeta());
   void notify.clientSigned(c.id); // sent in the background; a failed alert never blocks the sign-up
-  void import("@/lib/reminders").then((r) => r.welcome(c.id));
+  void import("@/lib/reminders").then((r) => r.afterSigning(c.id));
   void import("@/lib/meta").then((m) => m.consumerEvent(c.id, "CompleteRegistration"));
   redirect("/dashboard");
 }

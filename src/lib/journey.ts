@@ -32,7 +32,7 @@ export function journey(client: Row) {
   const raw: (Omit<Step, "status"> & { done: boolean; skip?: boolean })[] = [
     { key: "account", title: "Create your account", detail: "You're in.", done: true },
     { key: "sign", title: "Sign your agreement", detail: "Free service, cancel any time.", done: !!client.signed_at },
-    { key: "monitor", title: "Get your 3-bureau report", detail: "Sign up with a credit monitoring service so you can download all three bureaus.",
+    { key: "monitor", title: "Get your 3-bureau report", detail: "Sign up with a credit monitoring service so you can download all three bureaus. Our partner offers a 7-day trial for $1.",
       done: reports.length > 0 || log.some((e) => e.action === "monitoring_link_opened"), href: "/report", cta: "Get my report" },
     { key: "upload", title: "Upload your report", detail: "Save the full report as a PDF and upload it. We audit it automatically.", done: reports.length > 0, href: "/report", cta: "Upload report" },
     { key: "review", title: "Review your report", detail: "Check what we found. Mark anything accurate, and tell us about anything else that is wrong.",
