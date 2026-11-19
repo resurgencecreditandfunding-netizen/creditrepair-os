@@ -122,7 +122,26 @@ export async function sendWelcome(clientId: string, nowMs = Date.now()) {
   }
 }
 
-async function sendSequence(c: Row, seq: Sequence, step: number) {
+/**
+ * Right after signing. Someone without a report gets the first "get your report" email (with the $1 trial) at once,
+ * which also tells them how to sign back in; anyone else gets the short sign-in note.
+ */
+export async function afterSigning(clientId: string, nowMs = Date.now()) {
+  const c = db().prepare("SELECT * FROM clients WHERE id = ?").get(clientId) as Row | undefined;
+  if (!c) return;
+  const at = sequenceFor(c);
+  if (at?.seq.key !== "get_report" || c.reminders_off) return welcome(clientId);
+  try {
+    const channels = await sendSequence(c, at.seq, 0, inSendWindow(nowMs));
+    if (!channels.length) return;
+    recordSend(c.id, at.seq.key, 0, new Date(nowMs).toISOString());
+    log(c.id, "system", "followup_sent", { sequence: at.seq.key, email: 1, channels });
+  } catch (e) {
+    log(c.id, "system", "followup_failed", { sequence: at.seq.key, email: 1, error: String((e as Error).message).slice(0, 200) });
+  }
+}
+
+async function sendSequence(c: Row, seq: Sequence, step: number, textsAllowed = true) {
   const company = getTenant(c.tenant_id);
   let token: string | null = null;
   const link = (path: string) => signInUrl(token ??= createToken(c.id, 72 * 60), path);
@@ -132,7 +151,7 @@ async function sendSequence(c: Row, seq: Sequence, step: number) {
     await sendEmail(c.email, mail.subject, mail.body + footer(c, company), fromAs(company.name), { unsubscribeUrl: oneClickUrl(c.id), replyTo: replyToFor(company) });
     sent.push("email");
   }
-  const phone = mail.sms && c.sms_opt_in_at && c.phone ? normalizePhone(c.phone) : null;
+  const phone = textsAllowed && mail.sms && c.sms_opt_in_at && c.phone ? normalizePhone(c.phone) : null;
   if (smsConfigured() && phone) {
     await sendSms(phone, `${mail.sms} Reply STOP to opt out.`);
     sent.push("text");

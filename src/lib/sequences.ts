@@ -22,7 +22,7 @@ export interface Ctx {
   link: (path: string) => string; monitorUrl: string | null;
   errors: number; letters: number; items: number; price: string;
   reviewed: boolean; freezesLeft: number; freezesTotal: number;
-  signed: boolean; hasReport: boolean;
+  signed: boolean; hasReport: boolean; loginUrl: string;
 }
 export interface Email { subject: string; body: string; sms?: string }
 export interface Sequence {
@@ -35,6 +35,8 @@ export interface Sequence {
   steps: { after: number; write: (x: Ctx) => Email }[];
 }
 
+/** The trial's terms, stated plainly wherever the offer appears. */
+const TRIAL_TERMS = "$1 covers the first 7 days. After that the service bills its regular monthly price unless you cancel with them before the trial ends. That fee goes to them, not us, and we may earn a commission when you sign up through our link.";
 const first = (n: string) => n.trim().split(/\s+/)[0] || "there";
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
@@ -57,7 +59,7 @@ HOW YOU GET THERE
 About 30 minutes of your time, spread over a few sittings:
 
 1. Sign your agreement. 2 minutes, free to start, cancel any time.${done(x.signed)}
-2. Upload your 3-bureau credit report. About 10 minutes. We read every account on Equifax, Experian and TransUnion and compare them side by side.${done(x.hasReport)}
+2. Upload your 3-bureau credit report. About 10 minutes.${x.monitorUrl ? " No report yet? We'll show you how to get one with a 7-day trial for $1." : ""} We read every account on Equifax, Experian and TransUnion and compare them side by side.${done(x.hasReport)}
 3. Review what we found. Each possible error is explained in plain English, with the law behind it. You decide what's accurate and what isn't.${done(x.reviewed)}
 4. Freeze the secondary bureaus. Free, about 15 minutes, and it protects you while your disputes are open.
 5. Get your dispute letters. Written for your specific errors, in the right order, strongest first, citing the Fair Credit Reporting Act. You print and mail them.
@@ -130,19 +132,28 @@ Either way, I'm rooting for you.`,
     since: (c) => (c.signed_at && !getReports(c.id).length ? c.signed_at : null),
     path: () => "/report",
     steps: [
-      { after: 20 * H, write: (x) => ({
-        subject: "Step 2: get your 3-bureau report (about 10 minutes)",
+      // Sent the moment they sign: the price of monitoring is where most people stall, so lead with the $1 trial.
+      { after: 0, write: (x) => ({
+        subject: x.monitorUrl ? `${x.first}, haven't got your credit report yet? Start a 7-day trial for $1` : `${x.first}, next step: your 3-bureau credit report`,
         body: `Hi ${x.first},
 
-You're signed up. Nice work. The next step is the one that unlocks everything else: your 3-bureau credit report.
+You're signed. Nice work. The next step is the one that unlocks everything else: your 3-bureau credit report.
 
-Here's exactly how:
-1. ${x.monitorUrl ? `Sign up for credit monitoring here: ${x.monitorUrl}` : "Sign in to any credit monitoring service that shows all three bureaus."}
-2. Open your full 3-bureau report and save it as a PDF (Print, then "Save as PDF").
-3. Upload it here: ${x.link("/report")}
+${x.monitorUrl ? `Haven't got it yet? You don't need to pay for a full month to start. Get your 3-bureau report and scores with a 7-day trial for $1:
+${x.monitorUrl}
 
-That's it. Within a minute of uploading, you'll see every possible error we find.`,
-        sms: `${x.company}: ${x.first}, next step is your 3-bureau report. Upload it here: ${x.link("/report")}`,
+${TRIAL_TERMS}
+
+` : ""}Then:
+1. ${x.monitorUrl ? "Open your full 3-bureau report in your new account" : "Open your full 3-bureau report in your credit monitoring account"} and save it as a PDF (Print, then "Save as PDF").
+2. Upload it here: ${x.link("/report")}
+
+About 10 minutes, start to finish. Within a minute of uploading, you'll see every possible error we find, with the law behind each one.
+
+To come back any time: go to ${x.loginUrl} and enter this email address. There's no password; we send you a one-time sign-in link.`,
+        sms: x.monitorUrl
+          ? `${x.company}: ${x.first}, next step is your 3-bureau credit report. Get it with a 7-day trial for $1: ${x.monitorUrl} Then upload it: ${x.link("/report")}`
+          : `${x.company}: ${x.first}, next step is your 3-bureau report. Upload it here: ${x.link("/report")}`,
       }) },
       { after: 72 * H, write: (x) => ({
         subject: "Why we need all three reports",
@@ -152,7 +163,9 @@ Here's something most people don't know: the same account is often reported diff
 
 Those differences are some of the clearest errors there are, and you can only spot them by putting all three reports side by side. That's exactly what we do the moment your report is uploaded.
 
-Your report is the missing piece: ${x.link("/report")}`,
+${x.monitorUrl ? `No report yet? The 7-day trial is still $1: ${x.monitorUrl}
+
+` : ""}Your report is the missing piece: ${x.link("/report")}`,
       }) },
       { after: 144 * H, write: (x) => ({
         subject: "Is something stuck?",
@@ -160,11 +173,13 @@ Your report is the missing piece: ${x.link("/report")}`,
 
 You haven't uploaded your report yet, so I want to make sure nothing is in the way.
 
-- No monitoring account? ${x.monitorUrl ? `You can sign up here: ${x.monitorUrl}. ` : ""}You can also use your free reports from annualcreditreport.com.
+- No monitoring account? ${x.monitorUrl ? `Start a 7-day trial for $1 here: ${x.monitorUrl}. ` : ""}You can also use your free reports from annualcreditreport.com.
 - Not sure how to save it? Open the full report, choose Print, then "Save as PDF."
 - Upload says it can't read the file? Save it as a PDF and try again.
 
-Once it's in, you're one review away from your dispute letters: ${x.link("/report")}`,
+Once it's in, you're one review away from your dispute letters: ${x.link("/report")}${x.monitorUrl ? `
+
+${TRIAL_TERMS}` : ""}`,
       }) },
     ],
   },
@@ -298,7 +313,7 @@ export function contextFor(c: Row, link: (path: string) => string): Ctx {
     items: drafts.reduce((n, l) => n + l.cases.length, 0),
     price: (() => { const p = c.price_cents || (t.id === "tenant_default" ? directPriceCents() : 0); return `$${(p / 100).toFixed(p % 100 ? 2 : 0)}`; })(),
     reviewed: !!c.report_reviewed_at, freezesLeft: fz.total - fz.addressed, freezesTotal: fz.total,
-    signed: !!c.signed_at, hasReport: getReports(c.id).length > 0,
+    signed: !!c.signed_at, hasReport: getReports(c.id).length > 0, loginUrl: `${site()}/login`,
   };
 }
 
@@ -306,7 +321,7 @@ export function contextFor(c: Row, link: (path: string) => string): Ctx {
 export const SAMPLE_CTX: Ctx = {
   first: "Jordan", company: "Leverage IQ", isDirect: true, link: (p) => `https://leverageiq100.com${p}`,
   monitorUrl: "https://leverageiq100.com/go/partner", errors: 6, letters: 3, items: 11, price: "$37",
-  reviewed: false, freezesLeft: 5, freezesTotal: 5, signed: false, hasReport: false,
+  reviewed: false, freezesLeft: 5, freezesTotal: 5, signed: false, hasReport: false, loginUrl: "https://leverageiq100.com/login",
 };
 
 // ---------- records ----------

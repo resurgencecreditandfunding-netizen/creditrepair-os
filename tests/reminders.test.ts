@@ -93,9 +93,15 @@ describe("follow-up sequences", () => {
     store.ackDisclosure(id, meta); store.signContract(id, "Casey Long", meta);
     setTimes(id, { signed: T0 + 5 * H });
     expect(seqs.sequenceFor(store.getClient(id)!)?.seq.key).toBe("get_report");
-    expect((await runFor(id, T0 + 22 * H)).sent).toBe(0);  // 17 hours into the new stage
-    expect((await runFor(id, T0 + 26 * H)).sent).toBe(1);
-    expect(emailsTo("casey@example.com").at(-1).subject).toBe("Step 2: get your 3-bureau report (about 10 minutes)");
+    await rem.afterSigning(id, T0 + 5 * H);                  // the trial email goes out the moment they sign
+    const trial = emailsTo("casey@example.com").at(-1);
+    expect(trial.subject).toBe("Casey, haven't got your credit report yet? Start a 7-day trial for $1");
+    expect(trial.text).toContain("https://leverageiq100.com/go/");
+    expect(trial.text).toContain("regular monthly price unless you cancel");
+    expect(trial.text).toContain("https://leverageiq100.com/login and enter this email");
+    expect(store.getLog(id).some((e) => e.action === "welcome_sent")).toBe(false); // replaces the plain sign-in note
+    expect((await runFor(id, T0 + 26 * H)).sent).toBe(0);  // next one is 3 days after signing
+    expect(seqs.sentSteps(id, "get_report")).toHaveLength(1);
     store.saveReport(id, sample.sampleReport());
     db().prepare("UPDATE reports SET created_at = ? WHERE client_id = ?").run(iso(T0 + 30 * H), id);
     expect(seqs.sequenceFor(store.getClient(id)!)?.seq.key).toBe("review_freeze");
@@ -166,6 +172,15 @@ describe("follow-up sequences", () => {
     const ow = emailsTo("lee@example.com")[0];
     expect(ow.from).toContain("Smith Tax");
     expect(ow.text).not.toContain("$37");
+  });
+
+  it("send people who sign with a report already the short sign-in note instead", async () => {
+    on(); stub();
+    const id = store.createClient(person("default", "Pat Ready"));
+    store.ackDisclosure(id, meta); store.signContract(id, "Pat Ready", meta);
+    store.saveReport(id, sample.sampleReport());
+    await rem.afterSigning(id, T0);
+    expect(emailsTo("pat@example.com")[0].subject).toBe("You're signed up with Leverage IQ: how to get back in");
   });
 
   it("render every email with sample values", () => {

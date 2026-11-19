@@ -6,7 +6,7 @@ import { isPlatform } from "@/lib/console";
 import { requireOperator } from "@/lib/opsession";
 import { SAMPLE_CTX, SEQUENCES, WELCOME } from "@/lib/sequences";
 
-const when = (ms: number) => { const h = ms / 3_600_000; return h < 24 ? `${h} hours` : `${Math.round(h / 24)} days`; };
+const when = (ms: number) => { if (!ms) return "Right away"; const h = ms / 3_600_000; return h < 24 ? `${h} hours` : `${Math.round(h / 24)} days`; };
 const START: Record<string, string> = {
   finish_signup: "after they fill in the sign-up form",
   get_report: "after they sign",

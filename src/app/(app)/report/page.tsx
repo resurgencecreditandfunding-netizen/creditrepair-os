@@ -100,7 +100,7 @@ export default async function Report({ searchParams }: { searchParams: Promise<{
           <h2>{report ? "Upload a newer report (optional)" : "Step 1. Get your 3-bureau report"}</h2>
           {partners.length > 0 ? (
             <>
-              <p className="small muted">{report ? "Pull a fresh report each month so we can see what changed." : "You need a report that shows all three bureaus. Sign up with one of these services, then download your report."}</p>
+              <p className="small muted">{report ? "Pull a fresh report each month so we can see what changed." : "You need a report that shows all three bureaus. Don't have one? Start a trial below, then download your report."}</p>
               <div className="grid g3">
                 {partners.map((m) => (
                   <a key={m.id} href={`/go/${m.id}`} target="_blank" rel="sponsored noopener" className="card" style={{ marginBottom: 0, textDecoration: "none" }}>
