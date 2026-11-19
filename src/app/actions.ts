@@ -32,6 +32,7 @@ export async function startOnboarding(f: FormData) {
   const meta = await import("@/lib/meta");
   meta.saveMatch("clients", id, await (await import("@/lib/meta-request")).currentMatch());
   void meta.consumerEvent(id, "Lead");
+  void import("@/lib/reminders").then((r) => r.sendWelcome(id));
   await startSession(id);
   redirect("/start/disclosure");
 }

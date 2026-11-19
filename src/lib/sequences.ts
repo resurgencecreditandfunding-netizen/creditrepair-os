@@ -2,7 +2,7 @@ import { db } from "./db";
 import { freezeProgress } from "./freeze";
 import { listMonitoring } from "./console";
 import { site } from "./notify";
-import { currentFindings, getLetters, getReports, getTenant, needsPayment } from "./store";
+import { currentFindings, directPriceCents, getLetters, getReports, getTenant, needsPayment } from "./store";
 
 /**
  * Stage-based follow-up emails. Each sequence covers one place people stall, starts when they reach it,
@@ -22,6 +22,7 @@ export interface Ctx {
   link: (path: string) => string; monitorUrl: string | null;
   errors: number; letters: number; items: number; price: string;
   reviewed: boolean; freezesLeft: number; freezesTotal: number;
+  signed: boolean; hasReport: boolean;
 }
 export interface Email { subject: string; body: string; sms?: string }
 export interface Sequence {
@@ -36,6 +37,47 @@ export interface Sequence {
 
 const first = (n: string) => n.trim().split(/\s+/)[0] || "there";
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * Sent to everyone the moment they register, before any follow-up. No ask, no pressure: it shows the whole road,
+ * who does what, and where it leads, so every later email lands on someone who already knows the plan.
+ */
+export const WELCOME = (x: Ctx): Email => {
+  const done = (b: boolean) => (b ? " (done)" : "");
+  return {
+    subject: `Welcome, ${x.first}. Here's where this is going`,
+    body: `Hi ${x.first},
+
+Welcome to ${x.company}. There's nothing you need to do from this email. I just want you to see the whole road before you take the next step.
+
+WHERE THIS GOES
+A credit profile that's accurate, so when you apply for business funding, lenders judge the real you: not a late payment that never happened, not a balance that's wrong, not an account that isn't yours.
+
+HOW YOU GET THERE
+About 30 minutes of your time, spread over a few sittings:
+
+1. Sign your agreement. 2 minutes, free to start, cancel any time.${done(x.signed)}
+2. Upload your 3-bureau credit report. About 10 minutes. We read every account on Equifax, Experian and TransUnion and compare them side by side.${done(x.hasReport)}
+3. Review what we found. Each possible error is explained in plain English, with the law behind it. You decide what's accurate and what isn't.${done(x.reviewed)}
+4. Freeze the secondary bureaus. Free, about 15 minutes, and it protects you while your disputes are open.
+5. Get your dispute letters. Written for your specific errors, in the right order, strongest first, citing the Fair Credit Reporting Act. You print and mail them.
+6. Round by round. We track every 30-day deadline, read the bureaus' replies and prepare the next round when it's needed.
+7. Funding. As your profile improves, your business funding options open up.
+
+WHO DOES WHAT
+We do the heavy lifting: reading the reports, spotting the errors, writing the letters, tracking the deadlines, planning the next round. You make the decisions and put the letters in the mail. You stay in control the whole way.
+${x.isDirect ? `
+WHAT IT COSTS
+Starting is free. When your letters are ready, you can preview them first, then unlock them, and every later round, with one payment of ${x.price}. No subscription. You only pay once you can see exactly what you're getting.
+` : ""}
+THE HONEST PART
+Nobody can promise you a specific score, and accurate information can't be removed. What the law does require is that everything on your report be accurate and verifiable. That's the standard we hold every item to.
+
+${x.signed ? `Whenever you're ready, pick up where you left off: ${x.link("/dashboard")}` : `Whenever you're ready, step 1 is waiting: ${x.link("/start/sign")}`}
+
+If you have a question, just reply. A real person reads these.`,
+  };
+};
 
 export const SEQUENCES: Sequence[] = [
   {
@@ -254,8 +296,9 @@ export function contextFor(c: Row, link: (path: string) => string): Ctx {
     monitorUrl: partner ? `${site()}/go/${partner.id}` : null,
     errors: currentFindings(c.id).length, letters: drafts.length,
     items: drafts.reduce((n, l) => n + l.cases.length, 0),
-    price: `$${((c.price_cents ?? 0) / 100).toFixed((c.price_cents ?? 0) % 100 ? 2 : 0)}`,
+    price: (() => { const p = c.price_cents || (t.id === "tenant_default" ? directPriceCents() : 0); return `$${(p / 100).toFixed(p % 100 ? 2 : 0)}`; })(),
     reviewed: !!c.report_reviewed_at, freezesLeft: fz.total - fz.addressed, freezesTotal: fz.total,
+    signed: !!c.signed_at, hasReport: getReports(c.id).length > 0,
   };
 }
 
@@ -263,7 +306,7 @@ export function contextFor(c: Row, link: (path: string) => string): Ctx {
 export const SAMPLE_CTX: Ctx = {
   first: "Jordan", company: "Leverage IQ", isDirect: true, link: (p) => `https://leverageiq100.com${p}`,
   monitorUrl: "https://leverageiq100.com/go/partner", errors: 6, letters: 3, items: 11, price: "$37",
-  reviewed: false, freezesLeft: 5, freezesTotal: 5,
+  reviewed: false, freezesLeft: 5, freezesTotal: 5, signed: false, hasReport: false,
 };
 
 // ---------- records ----------
@@ -272,6 +315,10 @@ export const sentSteps = (clientId: string, key: string) =>
 export function recordSend(clientId: string, key: string, step: number, at: string) {
   db().prepare("INSERT OR IGNORE INTO sequence_sends (client_id, seq, step, sent_at) VALUES (?,?,?,?)").run(clientId, key, step, at);
 }
+
+export const welcomeSentAt = (clientId: string) =>
+  (db().prepare("SELECT sent_at FROM sequence_sends WHERE client_id = ? AND seq = 'welcome'").get(clientId) as Row | undefined)?.sent_at as string | undefined;
+export const welcomeCount = () => (db().prepare("SELECT count(*) n FROM sequence_sends WHERE seq = 'welcome'").get() as Row).n as number;
 
 /** Sent per email, and how many of those people have since moved past that stage. */
 export function sequenceStats() {

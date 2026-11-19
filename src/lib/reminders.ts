@@ -4,7 +4,7 @@ import { emailConfigured, fromAs, normalizePhone, sendEmail, sendSms, site, smsC
 import { createToken, signInUrl } from "./signin";
 import { today } from "./dates";
 import { draftableCases, getLetters, getReports, getTenant, log } from "./store";
-import { contextFor, recordSend, sentSteps, sequenceFor, type Sequence } from "./sequences";
+import { contextFor, recordSend, sentSteps, sequenceFor, WELCOME, welcomeSentAt, type Sequence } from "./sequences";
 import { oneClickUrl, unsubscribeUrl } from "./unsubscribe";
 
 type Row = Record<string, any>;
@@ -89,9 +89,37 @@ export function dueStep(c: Row, nowMs: number): { seq: Sequence; step: number } 
   const step = sent.length ? Math.max(...sent.map((r) => r.step)) + 1 : 0;
   if (step >= at.seq.steps.length) return null;
   if (nowMs - Date.parse(at.since) < at.seq.steps[step].after) return null;
-  const last = db().prepare("SELECT max(sent_at) AS t FROM sequence_sends WHERE client_id = ?").get(c.id) as Row;
+  const last = db().prepare("SELECT max(sent_at) AS t FROM sequence_sends WHERE client_id = ? AND seq != 'welcome'").get(c.id) as Row;
   if (last?.t && nowMs - Date.parse(last.t) < MIN_GAP) return null;
+  // The welcome always comes first. Sent on time, the first follow-up can come 2 hours later; sent late (people who
+  // registered before it existed), the follow-ups wait a full day so nobody gets two emails back to back.
+  const w = welcomeSentAt(c.id);
+  if (!w) return null;
+  const late = Date.parse(w) - Date.parse(c.created_at) > 3_600_000;
+  if (nowMs - Date.parse(w) < (late ? MIN_GAP : 2 * 3_600_000)) return null;
   return { seq: at.seq, step };
+}
+
+/** Where replies go: a person, never the no-reply sender. */
+const replyToFor = (company: Row) => (company.id === "tenant_default" ? process.env.CONTACT_EMAIL || "support@leverageiq100.com" : company.notify_email || null);
+
+/** The no-pressure welcome, sent the moment someone registers. Returns true when it went out. */
+export async function sendWelcome(clientId: string, nowMs = Date.now()) {
+  try {
+    const c = db().prepare("SELECT * FROM clients WHERE id = ?").get(clientId) as Row | undefined;
+    if (!c || c.reminders_off || welcomeSentAt(c.id) || !emailConfigured() || !c.email || !validEmail(c.email)) return false;
+    const company = getTenant(c.tenant_id);
+    let token: string | null = null;
+    const link = (path: string) => signInUrl(token ??= createToken(c.id, 72 * 60), path);
+    const mail = WELCOME(contextFor(c, link));
+    await sendEmail(c.email, mail.subject, mail.body + footer(c, company), fromAs(company.name), { unsubscribeUrl: oneClickUrl(c.id), replyTo: replyToFor(company) });
+    recordSend(c.id, "welcome", 0, new Date(nowMs).toISOString());
+    log(c.id, "system", "welcome_email_sent");
+    return true;
+  } catch (e) {
+    log(clientId, "system", "welcome_email_failed", { error: String((e as Error).message).slice(0, 200) });
+    return false;
+  }
 }
 
 async function sendSequence(c: Row, seq: Sequence, step: number) {
@@ -101,9 +129,7 @@ async function sendSequence(c: Row, seq: Sequence, step: number) {
   const mail = seq.steps[step].write(contextFor(c, link));
   const sent: string[] = [];
   if (emailConfigured() && c.email && validEmail(c.email)) {
-    // Replies go to a person: the platform's support inbox, or the operator's own alert address.
-    const replyTo = company.id === "tenant_default" ? process.env.CONTACT_EMAIL || "support@leverageiq100.com" : company.notify_email || null;
-    await sendEmail(c.email, mail.subject, mail.body + footer(c, company), fromAs(company.name), { unsubscribeUrl: oneClickUrl(c.id), replyTo });
+    await sendEmail(c.email, mail.subject, mail.body + footer(c, company), fromAs(company.name), { unsubscribeUrl: oneClickUrl(c.id), replyTo: replyToFor(company) });
     sent.push("email");
   }
   const phone = mail.sms && c.sms_opt_in_at && c.phone ? normalizePhone(c.phone) : null;
@@ -123,6 +149,11 @@ export async function runReminders(nowMs = Date.now()) {
   const clients = d.prepare("SELECT * FROM clients WHERE status = 'active' AND reminders_off = 0").all() as Row[];
   for (const c of clients) {
     out.checked++;
+    // Anyone in an early stage who never got the welcome (it failed, or they registered before it existed) gets it first.
+    if (sequenceFor(c) && !welcomeSentAt(c.id) && emailConfigured() && c.email && validEmail(c.email)) {
+      if (await sendWelcome(c.id, nowMs)) out.sent++; else out.failed++;
+      continue;
+    }
     // Stage follow-ups first. Anyone in a stage that has a sequence gets only that sequence, never the generic reminder too.
     if (sequenceFor(c)) {
       const due = dueStep(c, nowMs);
@@ -168,8 +199,8 @@ export async function welcome(clientId: string) {
     const c = db().prepare("SELECT * FROM clients WHERE id = ?").get(clientId) as Row;
     if (!c || !emailConfigured()) return;
     const company = getTenant(c.tenant_id);
-    await sendEmail(c.email, `Welcome to ${company.name}`,
-      `Hi ${c.name.split(" ")[0]},\n\nYour account is ready. There is no password: to come back later, go to ${site()}/login and enter this email address. We will send you a one-time sign-in link.\n\nYour first step is to get your 3-bureau credit report and upload it.\n\nYour signed documents are on the Documents page of your account.\n\n— ${company.name}\n${company.address}`,
+    await sendEmail(c.email, `You're signed up with ${company.name}: how to get back in`,
+      `Hi ${c.name.split(" ")[0]},\n\nYou're signed. Your account is ready. There is no password: to come back later, go to ${site()}/login and enter this email address. We will send you a one-time sign-in link.\n\nYour first step is to get your 3-bureau credit report and upload it.\n\nYour signed documents are on the Documents page of your account.\n\n— ${company.name}\n${company.address}`,
       fromAs(company.name));
     log(clientId, "system", "welcome_sent");
   } catch (e) { console.error("[welcome]", e); }

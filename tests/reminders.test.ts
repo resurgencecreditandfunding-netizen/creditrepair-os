@@ -26,6 +26,8 @@ async function runFor(id: string, at: number) {
   db().prepare("UPDATE clients SET reminders_off = 1 WHERE id != ? AND reminders_off = 0").run(id);
   try { return await rem.runReminders(at); } finally { db().prepare("UPDATE clients SET reminders_off = 0 WHERE id != ? AND id NOT IN (SELECT client_id FROM audit_log WHERE action = 'reminder_emails_unsubscribed')").run(id); }
 }
+/** Marks the welcome as sent when they registered, so a test can focus on what comes after it. */
+const welcomed = (id: string, at: number) => seqs.recordSend(id, "welcome", 0, iso(at));
 const setTimes = (id: string, t: { created?: number; signed?: number }) => {
   if (t.created !== undefined) db().prepare("UPDATE clients SET created_at = ? WHERE id = ?").run(iso(t.created), id);
   if (t.signed !== undefined) db().prepare("UPDATE clients SET signed_at = ? WHERE id = ?").run(iso(t.signed), id);
@@ -37,6 +39,7 @@ function withDrafts(tenant: string, name: string, at: number) {
   db().prepare("UPDATE clients SET signed_at = '2026-01-05T12:00:00Z', report_reviewed_at = ?, freeze_done_at = ? WHERE id = ?").run(iso(at), iso(at), id);
   store.saveReport(id, sample.sampleReport());
   store.buildRound(id);
+  welcomed(id, at - DAY);
   db().prepare("UPDATE reports SET created_at = ? WHERE client_id = ?").run(iso(at - DAY), id);
   db().prepare("UPDATE letters SET created_at = ? WHERE client_id = ?").run(iso(at), id);
   return id;
@@ -58,6 +61,7 @@ describe("follow-up sequences", () => {
     on(); stub();
     const id = store.createClient(person("default", "Jordan Rivers", "386-555-0111"));
     setTimes(id, { created: T0 });
+    welcomed(id, T0);
     expect(seqs.sequenceFor(store.getClient(id)!)?.seq.key).toBe("finish_signup");
     expect((await runFor(id, T0 + 1 * H)).sent).toBe(0);
     expect((await runFor(id, T0 + 2 * H)).sent).toBe(1);
@@ -84,6 +88,7 @@ describe("follow-up sequences", () => {
     on(); stub();
     const id = store.createClient(person("default", "Casey Long"));
     setTimes(id, { created: T0 });
+    welcomed(id, T0);
     await runFor(id, T0 + 2 * H);
     store.ackDisclosure(id, meta); store.signContract(id, "Casey Long", meta);
     setTimes(id, { signed: T0 + 5 * H });
@@ -102,10 +107,12 @@ describe("follow-up sequences", () => {
     on(); stub();
     const id = store.createClient(person("default", "Riley Park"));
     setTimes(id, { created: T0 - 10 * DAY });
-    expect(await runFor(id, T0)).toMatchObject({ sent: 1, failed: 0 });
-    expect((await runFor(id, T0 + 4 * H)).sent).toBe(0);   // 7pm: the next email is overdue, but too soon after the last
-    expect((await runFor(id, T0 + 21 * H)).sent).toBe(1);  // noon the next day
-    expect(emailsTo("riley@example.com").map((m) => m.subject)).toEqual(["Riley, you're one click from your free audit", "Your audit is ready to start"]);
+    expect(await runFor(id, T0)).toMatchObject({ sent: 1, failed: 0 });        // the welcome, late
+    expect((await runFor(id, T0 + 4 * H)).sent).toBe(0);                        // not two emails in one afternoon
+    expect((await runFor(id, T0 + 21 * H)).sent).toBe(1);                       // noon the next day: follow-up 1
+    expect((await runFor(id, T0 + 25 * H)).sent).toBe(0);                       // 4pm: overdue, but too soon after the last
+    expect((await runFor(id, T0 + 45 * H)).sent).toBe(1);
+    expect(emailsTo("riley@example.com").map((m) => m.subject)).toEqual(["Welcome, Riley. Here's where this is going", "Riley, you're one click from your free audit", "Your audit is ready to start"]);
   });
 
   it("send the $37 letter emails to direct customers only", async () => {
@@ -136,7 +143,37 @@ describe("follow-up sequences", () => {
     expect(emailsTo("quinn@example.com")).toHaveLength(0);
   });
 
+  it("welcome everyone the moment they register, with the whole road and no ask", async () => {
+    on(); stub();
+    const id = store.createClient(person("default", "Sky Welcome", "386-555-0199"));
+    expect(seqs.sequenceFor(store.getClient(id)!)?.seq.key).toBe("finish_signup");
+    expect(await rem.sendWelcome(id, T0)).toBe(true);
+    expect(await rem.sendWelcome(id, T0)).toBe(false); // only once
+    const [w] = emailsTo("sky@example.com");
+    expect(w.subject).toBe("Welcome, Sky. Here's where this is going");
+    expect(w.text).toContain("HOW YOU GET THERE");
+    expect(w.text).toContain("one payment of $37");
+    expect(w.text).toContain("&next=%2Fstart%2Fsign");
+    expect(w.text).toContain("/reminders/off?t=");
+    expect(w.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+    expect(sent.some((x) => x.url.includes("twilio"))).toBe(false); // email only
+    setTimes(id, { created: T0 });
+    expect((await runFor(id, T0 + 1 * H)).sent).toBe(0);
+    expect((await runFor(id, T0 + 2 * H)).sent).toBe(1); // first follow-up 2 hours after an on-time welcome
+
+    const op = store.createClient(person("smith-tax", "Lee Operator"));
+    expect(await rem.sendWelcome(op, T0)).toBe(true);
+    const ow = emailsTo("lee@example.com")[0];
+    expect(ow.from).toContain("Smith Tax");
+    expect(ow.text).not.toContain("$37");
+  });
+
   it("render every email with sample values", () => {
+    for (const x of [seqs.SAMPLE_CTX, { ...seqs.SAMPLE_CTX, signed: true, hasReport: true, isDirect: false }]) {
+      const w = seqs.WELCOME(x);
+      expect(w.body).not.toMatch(/undefined|NaN|\[object/);
+      expect(w.body).toContain(x.signed ? "(done)" : "/start/sign");
+    }
     for (const q of seqs.SEQUENCES) for (const st of q.steps) {
       const m = st.write(seqs.SAMPLE_CTX);
       expect(m.subject.length).toBeGreaterThan(5);
