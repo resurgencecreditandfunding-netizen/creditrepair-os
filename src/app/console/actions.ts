@@ -128,6 +128,7 @@ export async function registerCompany(f: FormData) {
   try {
     made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password"), plan: billing.isPlan(s(f, "plan")) ? s(f, "plan") : null, source: (await (await import("next/headers")).cookies()).get((await import("@/lib/attribution")).SOURCE_COOKIE)?.value ?? null });
   } catch (e) { return back("/console/signup", "error", message(e)); }
+  { const demo = await import("@/lib/demo"); demo.linkLead((await (await import("next/headers")).cookies()).get(demo.DEMO_COOKIE)?.value, made.tenantId); }
   void (await import("@/lib/notify")).operatorEvent(made.tenantId, "registered");
   const meta = await import("@/lib/meta");
   meta.saveMatch("tenants", made.tenantId, await (await import("@/lib/meta-request")).currentMatch());

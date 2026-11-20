@@ -12,6 +12,7 @@ import { DEMO } from "@/lib/store";
 import { emailConfigured, explainSendError, smsConfigured } from "@/lib/notify";
 import { capiOn, recentEvents } from "@/lib/meta";
 import { sequenceStats, welcomeCount } from "@/lib/sequences";
+import { demoStats } from "@/lib/demo";
 
 const SUB: Record<string, [string, string]> = {
   active: ["Paying", "dark"], trialing: ["Trial", ""], past_due: ["Payment overdue", "accent"], pending: ["Signed up, not paid", "accent"],
@@ -125,6 +126,16 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
             {ev.lastError && <p className="small" style={{ color: "var(--accent-dark)", margin: "8px 0 0" }}>Last error from Meta: {ev.lastError}</p>}
           </div>
         ); })()}
+
+        {(() => { const ds = demoStats(); return (<>
+          <h2 style={{ marginTop: 24 }}>Operator demo funnel</h2>
+          <div className="grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))" }}>
+            <Stat label="Opted in" value={ds.optIns} sub="/demo form" />
+            <Stat label="Reached the offer" value={ds.sawOffer} sub={ds.optIns ? `${Math.round((ds.sawOffer / ds.optIns) * 100)}% of opt-ins` : undefined} />
+            <Stat label="Created a login" value={ds.signedUp} />
+            <Stat label="Paid" value={ds.paid} hot={ds.paid > 0} />
+          </div>
+        </>); })()}
 
         <h2 style={{ marginTop: 24 }}>Follow-up emails</h2>
         <div className="card tablewrap">

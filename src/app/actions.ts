@@ -271,3 +271,17 @@ export async function stopReminderEmails(f: FormData) {
   const id = clientFromToken(s(f, "t"));
   redirect(`/reminders/off?done=${id && turnOff(id) ? 1 : 0}`);
 }
+
+export async function optInDemo(f: FormData) {
+  const demo = await import("@/lib/demo");
+  const jar = await cookies();
+  let id = "";
+  try {
+    id = demo.saveLead({ name: s(f, "name"), email: s(f, "email"), phone: s(f, "phone"), kind: s(f, "kind"),
+      source: jar.get(SOURCE_COOKIE)?.value ?? null, match: await (await import("@/lib/meta-request")).currentMatch() });
+  } catch (e) { back("/demo", "error", message(e)); }
+  jar.set(demo.DEMO_COOKIE, id, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 90, path: "/" });
+  void (await import("@/lib/meta")).demoLeadEvent(demo.getLead(id)!);
+  void demo.alertOwner(id);
+  redirect("/demo/watch");
+}
