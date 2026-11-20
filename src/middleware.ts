@@ -10,4 +10,4 @@ export function middleware(req: NextRequest) {
 }
 
 // Only the pages an ad or invite can land on.
-export const config = { matcher: ["/", "/partners", "/start", "/console/signup"] };
+export const config = { matcher: ["/", "/partners", "/start", "/console/signup", "/demo", "/season-pass"] };

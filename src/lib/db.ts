@@ -84,6 +84,10 @@ CREATE TABLE IF NOT EXISTS invites (
 );
 CREATE TABLE IF NOT EXISTS email_optouts (email TEXT PRIMARY KEY, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS lessons (tenant_id TEXT NOT NULL, step_key TEXT NOT NULL, url TEXT NOT NULL, PRIMARY KEY (tenant_id, step_key));
+CREATE TABLE IF NOT EXISTS demo_leads (
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, phone TEXT, kind TEXT, source TEXT, ad_match TEXT,
+  offer_seen_at TEXT, tenant_id TEXT, created_at TEXT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS sequence_sends (
   client_id TEXT NOT NULL, seq TEXT NOT NULL, step INTEGER NOT NULL, sent_at TEXT NOT NULL, PRIMARY KEY (client_id, seq, step)
 );

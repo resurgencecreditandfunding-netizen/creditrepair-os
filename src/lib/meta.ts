@@ -120,6 +120,15 @@ export async function operatorEvent(tenantId: string, name: MetaEvent["name"], v
   }, null);
 }
 
+/** A demo opt-in from an operator ad (no company yet). */
+export async function demoLeadEvent(lead: Row) {
+  return send({
+    name: "Lead", id: `Lead-demo-${lead.id}`, url: `${site()}/demo`, audience: "operator",
+    person: { email: lead.email, phone: lead.phone, name: lead.name, externalId: lead.id },
+    match: readMatch(lead.ad_match),
+  }, null);
+}
+
 /** Events sent and failed in the last 7 days, for the Business page. */
 export function recentEvents() {
   const since = new Date(Date.now() - 7 * 86400_000).toISOString();
