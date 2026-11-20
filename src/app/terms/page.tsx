@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { contactEmail } from "@/components/LegalLinks";
 import { LegalPage } from "@/components/LegalPage";
-import { PLAN_LABEL } from "@/lib/billing";
 import { getTenant } from "@/lib/store";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +43,7 @@ export default function Terms() {
       <h2>5. Operators</h2>
       <p>If you use the operator console for a business:</p>
       <ul>
-        <li><strong>Subscription.</strong> Your subscription is {PLAN_LABEL}, billed in advance each month through Stripe, and renews automatically until you cancel. You can cancel at any time from the Billing page; cancellation takes effect at the end of the current billing period, and we do not refund partial months. We will tell you before any price change takes effect.</li>
+        <li><strong>Fees.</strong> You pay the fees shown at checkout or in your written order, through Stripe. Recurring fees are billed in advance and renew automatically until you cancel; you can cancel at any time, and cancellation takes effect at the end of the current billing period. Setup fees and partial periods are not refunded except where the law requires. We will tell you before any price change takes effect.</li>
         <li><strong>Your clients and the law.</strong> Your business is responsible for its relationship with its clients and for following every law that applies to it. That includes the Credit Repair Organizations Act, state credit services laws (including any registration or bond requirements), the Telemarketing Sales Rule, the TCPA, CAN-SPAM, and the rule against charging clients for credit repair before services are fully performed. Leverage IQ provides compliance tools but does not make your business compliant.</li>
         <li><strong>Invitations.</strong> Invite only people you have an existing relationship with, and only by the means the platform provides.</li>
         <li><strong>Client information.</strong> Use client information only to serve those clients, keep your staff logins secure, and remove access for anyone who leaves your business.</li>

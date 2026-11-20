@@ -126,7 +126,7 @@ export async function registerCompany(f: FormData) {
   if (f.get("terms") !== "on") back("/console/signup", "error", "Please confirm the compliance statement.");
   let made: { tenantId: string; operatorId: string };
   try {
-    made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password"), source: (await (await import("next/headers")).cookies()).get((await import("@/lib/attribution")).SOURCE_COOKIE)?.value ?? null });
+    made = ops.registerCompany({ company: s(f, "company"), legalName: s(f, "legalName"), address: s(f, "address"), kind: s(f, "kind"), name: s(f, "name"), email: s(f, "email"), password: s(f, "password"), plan: billing.isPlan(s(f, "plan")) ? s(f, "plan") : null, source: (await (await import("next/headers")).cookies()).get((await import("@/lib/attribution")).SOURCE_COOKIE)?.value ?? null });
   } catch (e) { return back("/console/signup", "error", message(e)); }
   void (await import("@/lib/notify")).operatorEvent(made.tenantId, "registered");
   const meta = await import("@/lib/meta");
@@ -135,12 +135,14 @@ export async function registerCompany(f: FormData) {
   await startOpSession(made.operatorId);
   redirect("/console/billing");
 }
-export async function subscribe() {
+export async function subscribe(f: FormData) {
   const op = await requireOperator({ allowUnpaid: true });
   const billing = await import("@/lib/billing");
+  const plan = s(f, "plan");
+  if (!billing.isPlan(plan)) return back("/console/billing", "error", "Choose a plan.");
   let url = "";
-  try { url = await billing.createCheckout(store.getTenant(op.tenant_id), op.email, await origin()); } catch (e) { back("/console/billing", "error", message(e)); }
-  void (await import("@/lib/meta")).operatorEvent(op.tenant_id, "InitiateCheckout", billing.PLAN_MONTHLY);
+  try { url = await billing.createCheckout(store.getTenant(op.tenant_id), op.email, await origin(), plan); } catch (e) { back("/console/billing", "error", message(e)); }
+  void (await import("@/lib/meta")).operatorEvent(op.tenant_id, "InitiateCheckout", billing.PLANS[plan].cents / 100);
   redirect(url);
 }
 export async function manageBilling() {

@@ -150,7 +150,7 @@ export function db(): DatabaseSync {
   const d = new sqlite.DatabaseSync(file);
   d.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   d.exec(SCHEMA);
-  for (const col of ["legal_name TEXT", "sub_status TEXT NOT NULL DEFAULT 'exempt'", "stripe_customer_id TEXT", "stripe_subscription_id TEXT", "created_at TEXT", "suspended INTEGER NOT NULL DEFAULT 0",
+  for (const col of ["plan TEXT", "plan_ends_at TEXT", "legal_name TEXT", "sub_status TEXT NOT NULL DEFAULT 'exempt'", "stripe_customer_id TEXT", "stripe_subscription_id TEXT", "created_at TEXT", "suspended INTEGER NOT NULL DEFAULT 0",
     "notify_email TEXT", "notify_phone TEXT", "notify_all INTEGER NOT NULL DEFAULT 1", "funding_share_pct REAL",
     "logo BLOB", "logo_mime TEXT", "accent TEXT", "brand_version INTEGER NOT NULL DEFAULT 0", "source TEXT", "ad_match TEXT"]) {
     try { d.exec(`ALTER TABLE tenants ADD COLUMN ${col}`); } catch { /* column already exists */ }

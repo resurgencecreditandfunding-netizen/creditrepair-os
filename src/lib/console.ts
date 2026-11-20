@@ -151,7 +151,7 @@ export function removeMonitoring(op: Operator, id: string) {
 }
 
 // ---------- self-serve sign-up for a new company ----------
-export interface Registration { company: string; legalName: string; address: string; kind: string; name: string; email: string; password: string; source?: string | null }
+export interface Registration { company: string; legalName: string; address: string; kind: string; name: string; email: string; password: string; source?: string | null; plan?: string | null }
 /** Creates the company (unpaid) and its first admin login. Access opens when the subscription starts. */
 export function registerCompany(r: Registration) {
   for (const k of ["company", "legalName", "address", "name", "email"] as const) if (!r[k].trim()) throw new Error("Please fill in every field.");
@@ -168,5 +168,6 @@ export function registerCompany(r: Registration) {
     .run(tenantId, slug, r.company.trim(), r.address.trim(), kind, r.legalName.trim(), new Date().toISOString());
   const operatorId = createOperator({ tenantId, email, name: r.name.trim(), password: r.password, role: "admin" });
   if (r.source) d.prepare("UPDATE tenants SET source = ? WHERE id = ?").run(r.source, tenantId);
+  if (r.plan) d.prepare("UPDATE tenants SET plan = ? WHERE id = ?").run(r.plan, tenantId);
   return { tenantId, operatorId };
 }

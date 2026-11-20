@@ -6,12 +6,30 @@ type Row = Record<string, any>;
 /**
  * Operator subscriptions through Stripe. Settings:
  *   STRIPE_SECRET_KEY      secret API key (sk_test_... or sk_live_...)
- *   STRIPE_PRICE_ID        the recurring price operators subscribe to (price_...)
+ *   STRIPE_PRICE_ID        the $147/month support and community price (price_...); Season Pass renewals use it
  *   STRIPE_WEBHOOK_SECRET  signing secret of the webhook endpoint (whsec_...)
  *   APP_URL                public address of this site, e.g. https://app.example.com
  */
 export const billingConfigured = () => !!(process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PRICE_ID);
 export const PLAN_LABEL = process.env.PLAN_LABEL ?? "$147 per month";
+
+/**
+ * Operator plans, sold through the private webinar page (/season-pass).
+ * Season Passes charge the setup fee today and start the $147/month support and community plan when the term ends.
+ */
+export type PlanKey = "season6" | "season12" | "monthly";
+export const PLANS: Record<PlanKey, { name: string; price: string; cents: number; months?: number; recurring?: boolean; pitch: string; after: string }> = {
+  season6: { name: "6-Month Season Pass", price: "$997", cents: 99_700, months: 6, pitch: "Setup and 6 months of full access", after: "Then $147/month for priority support and community access. Cancel any time." },
+  season12: { name: "12-Month Season Pass", price: "$1,497", cents: 149_700, months: 12, pitch: "Setup and 12 months of full access", after: "Then $147/month for priority support and community access. Cancel any time." },
+  monthly: { name: "Monthly", price: "$497/month", cents: 49_700, recurring: true, pitch: "Full access, month to month", after: "Billed monthly. Cancel any time." },
+};
+export const isPlan = (k: unknown): k is PlanKey => typeof k === "string" && k in PLANS;
+/** The day a Season Pass term ends: the same date, N months on. */
+export function termEnd(months: number, nowMs = Date.now()) {
+  const d = new Date(nowMs);
+  d.setUTCMonth(d.getUTCMonth() + months);
+  return d;
+}
 const API = () => process.env.STRIPE_API_BASE ?? "https://api.stripe.com";
 
 /** past_due keeps access while Stripe retries the card; Stripe moves it to canceled or unpaid if retries fail. */
@@ -39,18 +57,41 @@ export async function stripeGet(path: string): Promise<Row> {
   return json;
 }
 
-/** Sends a company admin to Stripe's hosted checkout page to start the subscription. */
-export async function createCheckout(tenant: Row, email: string, origin: string): Promise<string> {
+/** Sends a company admin to Stripe's hosted checkout page for their plan. */
+export async function createCheckout(tenant: Row, email: string, origin: string, plan: PlanKey, nowMs = Date.now()): Promise<string> {
   if (!billingConfigured()) throw new Error("Billing is not set up yet.");
+  const p = PLANS[plan];
   const params: Record<string, string> = {
     mode: "subscription",
-    "line_items[0][price]": process.env.STRIPE_PRICE_ID!,
-    "line_items[0][quantity]": "1",
     client_reference_id: tenant.id,
+    "metadata[plan]": plan,
     "subscription_data[metadata][tenant_id]": tenant.id,
+    "subscription_data[metadata][plan]": plan,
     success_url: `${origin}/console/billing?ok=${encodeURIComponent("Payment received. Your account opens in a few seconds.")}`,
     cancel_url: `${origin}/console/billing`,
   };
+  if (p.recurring) {
+    Object.assign(params, {
+      "line_items[0][price_data][currency]": "usd",
+      "line_items[0][price_data][unit_amount]": String(p.cents),
+      "line_items[0][price_data][recurring][interval]": "month",
+      "line_items[0][price_data][product_data][name]": "Leverage IQ, monthly plan",
+      "line_items[0][quantity]": "1",
+    });
+  } else {
+    // The setup fee is charged today; the $147/month plan is held until the term ends, then bills automatically.
+    const end = termEnd(p.months!, nowMs);
+    Object.assign(params, {
+      "line_items[0][price_data][currency]": "usd",
+      "line_items[0][price_data][unit_amount]": String(p.cents),
+      "line_items[0][price_data][product_data][name]": `Leverage IQ ${p.name}: setup and ${p.months} months of access`,
+      "line_items[0][quantity]": "1",
+      "line_items[1][price]": process.env.STRIPE_PRICE_ID!,
+      "line_items[1][quantity]": "1",
+      "subscription_data[trial_end]": String(Math.floor(end.getTime() / 1000)),
+      "metadata[ends_at]": end.toISOString(),
+    });
+  }
   if (tenant.stripe_customer_id) params.customer = tenant.stripe_customer_id; else params.customer_email = email;
   const session = await stripe("checkout/sessions", params);
   return session.url as string;
@@ -86,8 +127,9 @@ export function applyEvent(event: Row): string {
     return r.changes ? "letters_paid" : "letters already paid";
   }
   if (event.type === "checkout.session.completed" && o.mode === "subscription" && o.client_reference_id) {
-    const r = d.prepare("UPDATE tenants SET sub_status='active', stripe_customer_id=?, stripe_subscription_id=? WHERE id=?")
-      .run(o.customer, o.subscription, o.client_reference_id);
+    const plan = isPlan(o.metadata?.plan) ? o.metadata.plan : null;
+    const r = d.prepare("UPDATE tenants SET sub_status='active', stripe_customer_id=?, stripe_subscription_id=?, plan=COALESCE(?, plan), plan_ends_at=? WHERE id=?")
+      .run(o.customer, o.subscription, plan, o.metadata?.ends_at ?? null, o.client_reference_id);
     return r.changes ? "activated" : "unknown company";
   }
   if (event.type === "customer.subscription.updated" || event.type === "customer.subscription.deleted") {

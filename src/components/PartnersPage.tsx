@@ -8,12 +8,13 @@ import { LegalLinks } from "./LegalLinks";
  * and a plain reminder that operators are responsible for the laws that apply to their own business.
  */
 
-const SIGNUP = "/console/signup";
+/** Operator plans are presented on the webinar, so the public page sends people there when it's set. */
+const SIGNUP = process.env.WEBINAR_URL || "/console/signup";
 
 const CTA = ({ dark = false }: { dark?: boolean }) => (
   <div className="sp-cta">
-    <Link href={SIGNUP} className="btn accent big">Get started</Link>
-    <span className={dark ? "sp-note-dark" : "sp-note"}>$147/month. Cancel anytime.</span>
+    <Link href={SIGNUP} className="btn accent big">{process.env.WEBINAR_URL ? "Watch the free training" : "Get started"}</Link>
+    <span className={dark ? "sp-note-dark" : "sp-note"}>Your brand, your clients, done-for-you setup.</span>
   </div>
 );
 
@@ -85,7 +86,7 @@ const WHO: [string, string][] = [
 ];
 
 const FAQ: [string, string][] = [
-  ["Do my clients pay Leverage IQ?", "No. Leverage IQ doesn't charge your clients anything. Your $147 a month covers your company. If you choose to charge your clients for credit services, the Credit Repair Organizations Act and your state's laws apply to you, including the rule against charging before services are fully performed."],
+  ["Do my clients pay Leverage IQ?", "No. Leverage IQ doesn't charge your clients anything. Your plan covers your company. If you choose to charge your clients for credit services, the Credit Repair Organizations Act and your state's laws apply to you, including the rule against charging before services are fully performed."],
   ["Am I a credit repair organization?", "If you offer credit services to clients, you may be, and some states require registration or a bond. Leverage IQ gives you compliance tools, but it isn't legal advice. Check with an attorney about your state."],
   ["How does the funding revenue share work?", "When one of your clients requests a funding review and is funded through the Leverage IQ funding program, you earn a share of the commission on that deal. The terms are set out in your agreement, and you can follow every deal on your Funding page."],
   ["What do my clients do, and what do I do?", "Clients upload their report, confirm their findings, freeze the secondary bureaus, approve each letter and mail it. You oversee everything from your console: what's waiting, what's late, who's ready for funding."],
@@ -161,7 +162,7 @@ export function PartnersPage({ legalName, address }: { legalName: string; addres
           <h2 className="sp-center">Up and running in an afternoon</h2>
           <ol className="sp-steps">
             {[
-              ["Create your company", "Sign up, add your legal name and address, and subscribe for $147 a month."],
+              ["Create your company", "Sign up and add your legal name and address. We set up your account with you."],
               ["Make it yours", "Upload your logo, pick your color, and link your own lessons to each step if you have them."],
               ["Invite your clients", "Paste or upload your client list. Each person gets a personal invite from your company."],
               ["Watch it run", "Clients work through their journey. Your queue shows what needs you, and funding requests come to you."],
@@ -198,18 +199,17 @@ export function PartnersPage({ legalName, address }: { legalName: string; addres
 
       <section className="sp-sec sp-alt" id="pricing">
         <div className="sp-in">
-          <h2 className="sp-center">One plan. Everything included.</h2>
+          <h2 className="sp-center">Everything included</h2>
           <div className="sp-prices">
             <div className="sp-price sp-price-main">
               <div className="sp-eyebrow">For your company</div>
-              <div className="sp-amount">$147 <small>/ month</small></div>
               <ul>
                 <li>Your logo, colors and sign-up link</li><li>Three-bureau audits and dispute letters in rounds</li>
                 <li>Work queue, client files and activity records</li><li>Automatic client reminders and sign-up alerts</li>
                 <li>Bulk client invites</li><li>Reading of bureau replies</li><li>Staff logins for your team</li>
                 <li>Funding pipeline and revenue share</li>
               </ul>
-              <p className="sp-small">Cancel anytime. Leverage IQ never charges your clients.</p>
+              <p className="sp-small">Leverage IQ never charges your clients.</p>
             </div>
           </div>
           <div className="sp-center"><CTA /></div>
