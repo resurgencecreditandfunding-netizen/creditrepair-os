@@ -16,7 +16,7 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
       <MetaPixel audience="operator" />
       <main className="wrap narrow">
         <h1>Offer credit repair and funding to your clients</h1>
-        <p className="muted">For tax professionals, funding professionals, and credit repair firms. {PLAN_LABEL}, cancel any time. Your clients are never charged by us.</p>
+        <p className="muted">For tax professionals, funding professionals, and credit repair firms. Your clients are never charged by us.</p>
         <Flash error={error} />
         {!open ? <div className="notice">Sign-up is not open yet.</div> : (
           <form action={registerCompany} className="card">
