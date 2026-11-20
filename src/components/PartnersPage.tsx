@@ -8,11 +8,12 @@ import { LegalLinks } from "./LegalLinks";
  * and a plain reminder that operators are responsible for the laws that apply to their own business.
  */
 
-const SIGNUP = "/console/signup";
+/** Operator plans are presented on the webinar, so the public page sends people there when it's set. */
+const SIGNUP = process.env.WEBINAR_URL || "/console/signup";
 
 const CTA = ({ dark = false }: { dark?: boolean }) => (
   <div className="sp-cta">
-    <Link href={SIGNUP} className="btn accent big">Get started</Link>
+    <Link href={SIGNUP} className="btn accent big">{process.env.WEBINAR_URL ? "Watch the free training" : "Get started"}</Link>
     <span className={dark ? "sp-note-dark" : "sp-note"}>Your brand, your clients, done-for-you setup.</span>
   </div>
 );

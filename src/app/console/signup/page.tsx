@@ -3,12 +3,13 @@ import { MetaPixel } from "@/components/MetaPixel";
 import { LegalLinks } from "@/components/LegalLinks";
 import { registerCompany } from "@/app/console/actions";
 import { Flash, ConsoleBrand } from "@/components/ui";
-import { billingConfigured, PLAN_LABEL } from "@/lib/billing";
+import { billingConfigured, isPlan, PLANS } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
-export default async function Signup({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
+export default async function Signup({ searchParams }: { searchParams: Promise<{ error?: string; plan?: string }> }) {
+  const { error, plan } = await searchParams;
+  const chosen = isPlan(plan) ? PLANS[plan] : null;
   const open = billingConfigured();
   return (
     <>
@@ -20,13 +21,14 @@ export default async function Signup({ searchParams }: { searchParams: Promise<{
         <Flash error={error} />
         {!open ? <div className="notice">Sign-up is not open yet.</div> : (
           <form action={registerCompany} className="card">
+            {chosen && <><input type="hidden" name="plan" value={plan} /><div className="notice">Your plan: <strong>{chosen.name}</strong>, {chosen.price}. You pay on the next page.</div></>}
             <h2>Your company</h2>
             <div className="field"><label htmlFor="company">Name your clients will see</label><input id="company" name="company" type="text" required /></div>
             <div className="field"><label htmlFor="legalName">Legal company name</label><input id="legalName" name="legalName" type="text" required /></div>
             <div className="field"><label htmlFor="address">Principal business address</label><input id="address" name="address" type="text" required /></div>
             <p className="fine">The legal name and address are printed on the agreement your clients sign. Federal law requires them.</p>
             <div className="field"><label htmlFor="kind">Type of business</label>
-              <select id="kind" name="kind"><option value="credit_repair">Credit repair firm</option><option value="tax_pro">Tax professional</option><option value="funding_pro">Funding professional</option></select></div>
+              <select id="kind" name="kind" defaultValue={chosen ? "tax_pro" : "credit_repair"}><option value="credit_repair">Credit repair firm</option><option value="tax_pro">Tax professional</option><option value="funding_pro">Funding professional</option></select></div>
             <h2 style={{ marginTop: 20 }}>Your login</h2>
             <div className="field"><label htmlFor="name">Your name</label><input id="name" name="name" type="text" required autoComplete="name" /></div>
             <div className="field"><label htmlFor="email">Work email</label><input id="email" name="email" type="email" required autoComplete="username" /></div>
